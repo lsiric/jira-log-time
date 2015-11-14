@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+
+  "name": "Jira Log Time",
+  "description": "Quickly log Jira time",
+  "version": "1.0",
+
+  "options_ui": {
+    // Required.
+    "page": "options.html",
+    // Recommended.
+    "chrome_style": true
+    // Not recommended; only provided for backwards compatibility,
+    // and will be unsupported in a future version of Chrome (TBD).
+    //"open_in_tab": true
+  },
+
+  "browser_action": {
+   "default_icon": "icon.png",
+   "default_popup": "popup.html"
+  },
+  "permissions": [
+   "activeTab",
+   "storage",
+   "http://192.168.99.100:32768/*"
+   ]
+}
