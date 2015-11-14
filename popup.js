@@ -21,54 +21,6 @@ function getCredentials () {
 }
 
 
-
-function JiraAPI (baseUrl, apiExtension, username, password) {
-
-    var apiDefaults = {
-        baseUrl : baseUrl,
-        apiExtension: apiExtension,
-        username: username,
-        password: password
-    };
-
-    return {
-        login: login,
-        getAssignedIssues: getAssignedIssues
-    };
-
-
-
-    function login() {
-
-        return $.ajax({
-            type: 'GET',
-            url: baseUrl + apiExtension + '/user?username=' + username,
-            headers: {
-                'Authorization': 'Basic ' + btoa(username + ':' + password)
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
-    };
-
-    function getAssignedIssues () {
-
-        return $.ajax({
-            type: 'GET',
-            url: baseUrl + apiExtension + '/search?jql=assignee=' + username.replace('@', '\\u0040'),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
-    }    
-
-}
-
-
 function onDOMLoaded () {
 
 
@@ -171,28 +123,8 @@ function onDOMLoaded () {
 
         var parameters = {
             fields : {
-                // comment: 'I did some work here on ' + id,
-                // started: new Date().toISOString(),
-                // timeSpent: '2h'
-
-                "self": "http://www.example.com/jira/rest/api/2/issue/10010/worklog/10000",
-                "author": {
-                    "self": "http://www.example.com/jira/rest/api/2/user?username=fred",
-                    "name": "fred",
-                    "displayName": "Fred F. User",
-                    "active": false
-                },
-                "updateAuthor": {
-                    "self": "http://www.example.com/jira/rest/api/2/user?username=fred",
-                    "name": "fred",
-                    "displayName": "Fred F. User",
-                    "active": false
-                },
-                "comment": "I did some work here.",
-                "started": "2015-10-07T00:32:50.877+0000",
-                "timeSpent": "3h",
-                "id": "100028"
-
+                "started": new Date().toISOString().replace('Z', '+0530'), // TODO: Problems with the timezone, investigate
+                "timeSpent": "2d"
             }
         };
 
