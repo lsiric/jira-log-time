@@ -3,19 +3,17 @@ document.addEventListener('DOMContentLoaded', onDOMLoaded, false);
 
 
 function getCredentials () {
-
     chrome.storage.sync.get({
-        description: '',
-        jiraUrl: '',
-        username: '',
-        password: ''
-        }, function(items) {
-
-        document.getElementById('description').value = items.description;
-        document.getElementById('jiraUrl').value = items.jiraUrl;
-        document.getElementById('username').value = items.username;
-        document.getElementById('password').value = items.password;
-
+            description: '',
+            jiraUrl: '',
+            username: '',
+            password: ''
+        }, 
+        function(items) {
+            document.getElementById('description').value = items.description;
+            document.getElementById('jiraUrl').value = items.jiraUrl;
+            document.getElementById('username').value = items.username;
+            document.getElementById('password').value = items.password;
     });
         
 }
@@ -47,55 +45,42 @@ function onDOMLoaded () {
 
     var username = 'cs.tropic@gmail.com';
     var password = 'Creative1';
-    var description = 'tralala';
+    var description = 'Super Project';
     var baseUrl = 'http://192.168.99.100:32768';
     var apiExtension = '/rest/api/2';
 
-    // var jira = JiraAPI(baseUrl, apiExtension, username, password);
+    var JIRA = JiraAPI(baseUrl, apiExtension, username, password);
 
-    // jira.getAssignedIssues()
-    // .success(function (data) {
-    //     console.log('success');
-    // })
-    // .error(function (error) {
-    //     console.log(error);
-    // });
+    JIRA.getAssignedIssues()
+    .success(function (issuesResponse) {
 
-    fetchOpenIssues(username, password)
-    .success(function (data) {
-        
-        var container = document.getElementById('issues');
+        var promises = [];
 
-        for (var i = 0; i < data.issues.length; i++) {
+        issuesResponse.issues.forEach(function (issue) {
+            promises.push(getWorklog(issue.key));
+        });
 
-            var issue = data.issues[i];
-            var summary = issue.fields.summary;
-            var id = issue.key;
+        function getWorklog (id) {
+            return JIRA.getIssueWorklog(id)
+            .success(function (worklogResponse) {
 
-            var br = document.createElement('br');
-            var div = document.createElement('div');
-            div.id = id;
+                issuesResponse.issues.forEach(function (issue) {
+                    if(issue.key === id){
+                        issue.totalTime = sumWorklogs(worklogResponse.worklogs);
+                    } 
+                });
+            })
+            .error(function (error) {
+                console.log(error);
+            });
+        }
 
-            div.innerText = summary + ' [' + issue.key + ']';
+        $.when.apply($, promises)
+        .done(function () {
 
-            container.appendChild(div);
+            drawIssuesTable(description, issuesResponse.issues);
 
-            addTotalTimeSpentToForm(username, password, id);
-
-            // var input = document.createElement('input');
-            // container.appendChild(input);
-
-            var button = document.createElement('button');
-            button.value = id;
-            button.innerText = 'Add 2h';
-
-            addClickFunction(username, password, button, id);
-
-            container.appendChild(button);
-
-            container.appendChild(br);
-
-        };
+        });
 
     })
     .error(function (error) {
@@ -103,150 +88,129 @@ function onDOMLoaded () {
     });
 
 
-    function addClickFunction (username, password, button, id) {
+    function drawIssuesTable (projectName, issues) {
 
-        button.addEventListener('click', function (evt) {
-           updateWorklog(username, password, id)
-           .success(function (data) {
-               console.log(data);
-           })
-           .error(function (error) {
-               console.log(error);
-           });
-        });
+        var table = document.createElement('table');
 
-    }
+        addTableHeader(table, projectName);
 
+        for (var i = 0; i < issues.length; i++) {
 
+            var issue = issues[i];
 
-    function updateWorklog (username, password, id) {
+            addTableRow(
+                table, 
+                issue.key,
+                issue.fields.summary,
+                issue.totalTime
+            );
 
-        var parameters = {
-            fields : {
-                "started": new Date().toISOString().replace('Z', '+0530'), // TODO: Problems with the timezone, investigate
-                "timeSpent": "2d"
-            }
         };
 
-        return $.ajax({
-            type: 'POST',
-            url: 'http://192.168.99.100:32768/rest/api/2/issue/' + id + '/worklog',
-            headers: {
-               // 'Authorization': 'Basic ' + btoa(username + ':' + password),
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify(parameters.fields),
-            contentType: 'application/json',
-            dataType: 'json'
-        });
+        document.getElementById('issues').appendChild(table);
 
     }
 
-    /*
+    function addTableHeader (table, projectName) {
+        var header = document.createElement('th');
+        header.setAttribute('colspan', 3);
+        var td = document.createElement('td');
+        td.innerText = projectName;
+        header.appendChild(td);
+        table.appendChild(header);
+        return table;
+    }
 
-    "timeSpent": "1h 30m",
-    "started": "2013-09-01T10:30:18.932+0530",
-    "comment": "logging via powershell"
+    function addTableRow (table, id, summary, time) {
+        var row = document.createElement('tr');
+        var td1 = document.createElement('td');
+        var td2 = document.createElement('td');
+        var td3 = document.createElement('td');
 
-    */
+        td1.innerText = id;
+        td1.className = 'issue-id';
 
+        td2.innerText = summary;
+        td2.className = 'issue-summary';
 
+        td3.innerText = time;
+        td3.className = 'issue-total-time-spent';
+        td3.setAttribute('data-issue-id', id);
 
-    function addTotalTimeSpentToForm (username, password, id) {
-        getWorklog(username, password, id)
-        .success(function methodName (data) {
+        row.appendChild(td1);
+        row.appendChild(td2);
+        row.appendChild(td3);
 
-            var div = document.getElementById(id);
+        addTimeInput(row, id);
+        addActionButton(row, id);
 
-            div.innerText += ' : ';
+        table.appendChild(row);
+        return table;
+    }
 
-            var text = '';
-            for (var j = 0; j < data.worklogs.length; j++) {
-                text += data.worklogs[j].timeSpent + ' ';
-            };
+    function addTimeInput (parent, issueId) {
+        var td = document.createElement('td');
+        
+        var input = document.createElement('input');
+        input.className = 'issue-time-input';
+        input.setAttribute('data-issue-id', issueId);
 
-            div.innerText += text;
+        td.appendChild(input);
+        parent.appendChild(td);
+    }
 
+    function addActionButton (parent, issueId) {
+        var td = document.createElement('td');
+        td.className = 'issue-actions';
+        
+        var button = document.createElement('button');
+        button.setAttribute('data-issue-id', issueId);
+        button.className = 'log-time-btn';
+        button.innerText = 'Log Time';
+
+        button.addEventListener('click', logTimeClick);
+
+        td.appendChild(button);
+        parent.appendChild(td);
+    }
+
+    function logTimeClick (evt) {
+        var issueId = evt.target.getAttribute('data-issue-id')
+        var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
+
+        JIRA.updateWorklog(issueId, timeInput.value)
+        .success(function (data) {
+            refreshWorklog(issueId);
         })
         .error(function (error) {
             console.log(error);
         });
     }
 
-
+    function refreshWorklog (issueId) {
+        JIRA.getIssueWorklog(issueId)
+        .success(function (data) {
+            var totalTimeSpent = document.querySelector('td[data-issue-id=' + issueId + ']');
+            totalTimeSpent.innerText = sumWorklogs(data.worklogs);
+        })
+    }
 
     function sumWorklogs (worklogs) {
-        for (var j = 0; j < worklogs.length; j++) {
-            var worklog = worklogs[j];
 
-        };
-    }
+        var totalSeconds = worklogs.reduce(function(a, b){
+            return {timeSpentSeconds: a.timeSpentSeconds + b.timeSpentSeconds}
+        }, {timeSpentSeconds:0}).timeSpentSeconds;
 
+        var totalWeeks = Math.floor(totalSeconds / 604800);
+        totalSeconds = totalSeconds % 604800;
+        var totalDays = Math.floor(totalSeconds / 86400);
+        totalSeconds = totalSeconds % 86400;
+        var totalHours = Math.floor(totalSeconds / 3600);
+        totalSeconds = totalSeconds % 3600;
+        var totalMinutes = Math.floor(totalSeconds / 60);
 
-    function getWorklog (username, password, id, container) {
-
-        return $.ajax({
-            type: 'GET',
-            url: 'http://192.168.99.100:32768/rest/api/2/issue/' + id + '/worklog',
-            headers: {
-             //   'Authorization': 'Basic ' + btoa(username + ':' + password),
-                'Content-Type': 'application/json'
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
+        return (totalWeeks ? totalWeeks + 'w' : '') + ' ' + (totalDays ? totalDays + 'd' : '') + ' ' + (totalHours ? totalHours + 'h' : '') + ' ' + (totalMinutes ? totalMinutes + 'min' : '');
 
     }
-
-    function fetchOpenIssues (username, password) {
-
-        return $.ajax({
-            type: 'GET',
-            url: 'http://192.168.99.100:32768/rest/api/2/search?jql=assignee=cs.tropic\\u0040gmail.com',
-            headers: {
-                'Authorization': 'Basic ' + btoa(username + ':' + password),
-                'Content-Type': 'application/json'
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
-    }
-
-    function jqueryLogin(username, password) {
-
-      $.ajax({
-         url: 'http://192.168.99.100:32768/rest/api/2/user?username=' + username,
-         data: {
-            format: 'json'
-         },
-         headers: {
-          'Authorization': 'Basic ' + btoa(username + ':' + password)
-         },
-         error: function() {
-            $('#info').html('<p>An error has occurred</p>');
-         },
-         contentType: 'application/json',
-         dataType: 'json',
-         success: function(data) {
-            console.log(data);
-         },
-         type: 'GET'
-      });
-
-    };
-
-    function querystring_from_params(params) {
-        var querystring = '';
-        if (params) {
-            var arr = [];
-            for (var param in params) {
-                arr.push(param + '=' + params[param]);
-            }
-            querystring = arr.length > 0 ? '?' + arr.join('&') : '';
-        }
-        return querystring;
-    }
-
 
 }
