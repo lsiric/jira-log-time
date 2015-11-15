@@ -191,10 +191,10 @@
                 return {timeSpentSeconds: a.timeSpentSeconds + b.timeSpentSeconds}
             }, {timeSpentSeconds:0}).timeSpentSeconds;
 
-            var totalWeeks = Math.floor(totalSeconds / 604800);
-            totalSeconds = totalSeconds % 604800;
-            var totalDays = Math.floor(totalSeconds / 86400);
-            totalSeconds = totalSeconds % 86400;
+            var totalWeeks = Math.floor(totalSeconds / 144000);
+            totalSeconds = totalSeconds % 144000;
+            var totalDays = Math.floor(totalSeconds / 28800);
+            totalSeconds = totalSeconds % 28800;
             var totalHours = Math.floor(totalSeconds / 3600);
             totalSeconds = totalSeconds % 3600;
             var totalMinutes = Math.floor(totalSeconds / 60);
