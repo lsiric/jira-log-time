@@ -83,6 +83,7 @@
                     .done(function () {
 
                         drawIssuesTable(description, issuesResponse.issues);
+                        errorMessage('');
 
                     });
 
@@ -232,9 +233,14 @@
         }
 
         function genericResponseError (error) {
-
-            var resp = JSON.parse(error.responseText);
-            errorMessage(resp.errorMessages[0]);
+            var msg = '';
+            if(error.responseText){
+                var resp = JSON.parse(error.responseText);
+                msg = resp.errorMessages[0];
+            }else{
+                msg = error.statusText;
+            }
+            errorMessage(msg);
 
         }
 

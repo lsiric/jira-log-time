@@ -54,14 +54,6 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         return ajaxWrapper(url, options);
     }
 
-    function toUnicode(str){
-        var result = "";
-        for(var i = 0; i < str.length; i++){
-            result += "\\u" + ("000" + str[i].charCodeAt(0).toString(16)).substr(-4);
-        }
-        return result;
-    }
-
     function ajaxWrapper (urlExtension, optionsOverrides) {
         var options = $.extend({}, apiDefaults, optionsOverrides);
         options.url += urlExtension;
