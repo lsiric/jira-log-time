@@ -1,4 +1,4 @@
-function JiraAPI (baseUrl, apiExtension, username, password) {
+function JiraAPI (baseUrl, apiExtension, username, password, jql) {
 
     var apiDefaults = {
         type: 'GET',
@@ -35,7 +35,7 @@ function JiraAPI (baseUrl, apiExtension, username, password) {
     }
 
     function getAssignedIssues () {
-        return ajaxWrapper('/search?jql=assignee=' + username.replace('@', '\\u0040') + '+AND status=Done');
+        return ajaxWrapper('/search?jql=' + jql);
     }    
 
     function getIssueWorklog (id) {

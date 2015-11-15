@@ -11,7 +11,8 @@
             password: '',
             description: '',
             baseUrl: '',
-            apiExtension: ''
+            apiExtension: '',
+            jql: ''
         }, 
         loadOptionsSuccess);
 
@@ -37,7 +38,7 @@
                 errorMessage(error);
             }else{
 
-                JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password);
+                JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password, options.jql);
 
                 initPlugin(options.description);
 
