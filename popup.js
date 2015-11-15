@@ -1,84 +1,96 @@
 (function () {
 
-    document.addEventListener('DOMContentLoaded', function () {
-        
+    document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+
+    function onDOMContentLoaded () {
+
+        var JIRA = null;
+
         chrome.storage.sync.get({
-                username: '',
-                password: '',
-                description: '',
-                baseUrl: '',
-                apiExtension: ''
-            }, 
-            function(items) {
-
-                var error = '';
-
-                if(!items.username){
-                    error += 'Missing username';
-                }
-                if(!items.password){
-                    error += '; Missing password';
-                }
-                if(!items.baseUrl){
-                    error += '; Missing base URL';
-                }
-                if(!items.apiExtension){
-                    error += '; Missing API extension';
-                }
-
-                if(error){
-                    errorMessage(error);
-                }else{
-                    initPlugin(
-                        items.username,
-                        items.password,
-                        items.description,
-                        items.baseUrl,
-                        items.apiExtension
-                    );
-                }
-
-        });
-
-    }, false);
+            username: '',
+            password: '',
+            description: '',
+            baseUrl: '',
+            apiExtension: ''
+        }, 
+        loadOptionsSuccess);
 
 
-    function initPlugin (username, password, description, baseUrl, apiExtension) {
+        function loadOptionsSuccess (options) {
 
-        var JIRA = JiraAPI(baseUrl, apiExtension, username, password);
+            var error = '';
 
-        JIRA.getAssignedIssues()
-        .success(function (issuesResponse) {
-
-            var promises = [];
-
-            issuesResponse.issues.forEach(function (issue) {
-                promises.push(getWorklog(issue.key));
-            });
-
-            function getWorklog (id) {
-                return JIRA.getIssueWorklog(id)
-                .success(function (worklogResponse) {
-
-                    issuesResponse.issues.forEach(function (issue) {
-                        if(issue.key === id){
-                            issue.totalTime = sumWorklogs(worklogResponse.worklogs);
-                        } 
-                    });
-                })
-                .error(genericResponseError);
+            if(!options.username){
+                error += 'Missing username';
+            }
+            if(!options.password){
+                error += '; Missing password';
+            }
+            if(!options.baseUrl){
+                error += '; Missing base URL';
+            }
+            if(!options.apiExtension){
+                error += '; Missing API extension';
             }
 
-            $.when.apply($, promises)
-            .done(function () {
+            if(error){
+                errorMessage(error);
+            }else{
 
-                drawIssuesTable(description, issuesResponse.issues);
+                JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password);
 
-            });
+                initPlugin(options.description);
 
-        })
-        .error(genericResponseError);
+            }
 
+        }
+
+        function initPlugin (description) {
+
+            JIRA.login()
+            .success(onLoginSuccess)
+            .error(genericResponseError);
+
+            function onLoginSuccess () {
+
+                JIRA.getAssignedIssues()
+                .success(function (issuesResponse) {
+
+                    var promises = [];
+
+                    issuesResponse.issues.forEach(function (issue) {
+                        promises.push(getWorklog(issue.key));
+                    });
+
+                    function getWorklog (id) {
+
+                        return JIRA.getIssueWorklog(id)
+                        .success(function (worklogResponse) {
+
+                            issuesResponse.issues.forEach(function (issue) {
+                                if(issue.key === id){
+                                    issue.totalTime = sumWorklogs(worklogResponse.worklogs);
+                                } 
+                            });
+
+                        })
+                        .error(genericResponseError);
+
+                    }
+                    // when all worklogs are fetched, draw the table
+                    $.when.apply($, promises)
+                    .done(function () {
+
+                        drawIssuesTable(description, issuesResponse.issues);
+
+                    });
+
+                })
+                .error(genericResponseError);
+
+            }
+
+        }
 
         function drawIssuesTable (projectName, issues) {
 
@@ -104,6 +116,7 @@
         }
 
         function addTableHeader (table, projectName) {
+
             var header = document.createElement('th');
             header.setAttribute('colspan', 3);
             var td = document.createElement('td');
@@ -111,9 +124,11 @@
             header.appendChild(td);
             table.appendChild(header);
             return table;
+
         }
 
         function addTableRow (table, id, summary, time) {
+
             var row = document.createElement('tr');
             var td1 = document.createElement('td');
             var td2 = document.createElement('td');
@@ -138,9 +153,11 @@
 
             table.appendChild(row);
             return table;
+
         }
 
         function addTimeInput (parent, issueId) {
+
             var td = document.createElement('td');
             
             var input = document.createElement('input');
@@ -149,9 +166,11 @@
 
             td.appendChild(input);
             parent.appendChild(td);
+            
         }
 
         function addActionButton (parent, issueId) {
+
             var td = document.createElement('td');
             td.className = 'issue-actions';
             
@@ -164,9 +183,14 @@
 
             td.appendChild(button);
             parent.appendChild(td);
+
         }
 
         function logTimeClick (evt) {
+
+            // clear error messages
+            errorMessage('');
+
             var issueId = evt.target.getAttribute('data-issue-id')
             var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
 
@@ -175,14 +199,17 @@
                 refreshWorklog(issueId);
             })
             .error(genericResponseError);
+
         }
 
         function refreshWorklog (issueId) {
+
             JIRA.getIssueWorklog(issueId)
             .success(function (data) {
                 var totalTimeSpent = document.querySelector('td[data-issue-id=' + issueId + ']');
                 totalTimeSpent.innerText = sumWorklogs(data.worklogs);
-            })
+            });
+
         }
 
         function sumWorklogs (worklogs) {
@@ -204,14 +231,16 @@
         }
 
         function genericResponseError (error) {
+
             var resp = JSON.parse(error.responseText);
             errorMessage(resp.errorMessages[0]);
+
         }
 
-    }
+        function errorMessage (message) {
+            document.getElementById('error').innerText = message;
+        }
 
-    function errorMessage (message) {
-        document.getElementById('error').innerText = message;
     }
     
 })(); 
