@@ -1,29 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Test Extension Options</title>
+  <title>Jira Log Time Options</title>
   <style>
-    body: { padding: 10px; }
+    body { padding: 10px; }
+    table, tbody, input {
+      width: 100%;
+    }
   </style>
 </head>
 
 <body>
 
-  Description: 
-  <input id="description"></input></br>
+  <table>
+    <tr>
+      <td>
+        Description
+      </td>
+      <td>
+        <input id="description"></input>
+      </td>
+    </tr>
 
-  URL: 
-  <input id="jiraUrl"></input></br>
+    <tr>
+      <td>
+        URL       
+      </td>
+      <td>
+        <input id="baseUrl"></input>
+      </td>
+    </tr>
 
-  Username: 
-  <input id="username"></input></br>
+    <tr>
+      <td>
+        REST Api Extension
+      </td>
+      <td>
+        <input id="apiExtension"></input>
+      </td>
+    </tr>
 
-  Password: 
-  <input id="password" type="password"></input></br>
+    <tr>
+      <td>
+        Username
+      </td>
+      <td>
+        <input id="username"></input>
+      </td>
+    </tr>
 
-  <div id="status"></div>
+    <tr>
+      <td>
+        Password       
+      </td>
+      <td>
+        <input id="password" type="password"></input>
+      </td>
+    </tr>
+  </table>
+
   <button id="save">Save</button>
+  <div id="status"></div>
 
   <script src="options.js"></script>
+
 </body>
 </html>
