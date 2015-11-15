@@ -1,10 +1,13 @@
 function JiraAPI (baseUrl, apiExtension, username, password) {
 
     var apiDefaults = {
-        baseUrl : baseUrl,
-        apiExtension: apiExtension,
-        username: username,
-        password: password
+        type: 'GET',
+        url : baseUrl + apiExtension,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        contentType: 'application/json',
+        dataType: 'json'
     };
 
     return {
@@ -18,82 +21,51 @@ function JiraAPI (baseUrl, apiExtension, username, password) {
 
 
     function login() {
-
-        return $.ajax({
-            type: 'GET',
-            url: baseUrl + apiExtension + '/user?username=' + username,
+        var url = '/user?username=' + username;
+        var options = {
             headers: {
                 'Authorization': 'Basic ' + btoa(username + ':' + password)
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
+            }            
+        }
+        return ajaxWrapper(url, options);
     };
 
     function getIssue (id) {
-
-        return $.ajax({
-            type: 'GET',
-            url: baseUrl + apiExtension + '/issue/' + id,
-            headers: {
-                'Authorization': 'Basic ' + btoa(username + ':' + password)
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
+        return ajaxWrapper('/issue/' + id);
     }
 
     function getAssignedIssues () {
-
-        return $.ajax({
-            type: 'GET',
-            url: baseUrl + apiExtension + '/search?jql=assignee=' + username.replace('@', '\\u0040'),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
+        return ajaxWrapper('/search?jql=assignee=' + username.replace('@', '\\u0040') + '+AND status=Done');
     }    
 
     function getIssueWorklog (id) {
-
-        return $.ajax({
-            type: 'GET',
-            url: baseUrl + apiExtension + '/issue/' + id + '/worklog',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-
+        return ajaxWrapper('/issue/' + id + '/worklog');
     }
 
     function updateWorklog (id, timeSpent) {
-
-        var parameters = {
-            fields : {
+        var url = '/issue/' + id + '/worklog';
+        var options = {
+            type: 'POST',
+            data: JSON.stringify({
                 "started": new Date().toISOString().replace('Z', '+0530'), // TODO: Problems with the timezone, investigate
                 "timeSpent": timeSpent
-            }
-        };
+            })
+        }
+        return ajaxWrapper(url, options);
+    }
 
-        return $.ajax({
-            type: 'POST',
-            url: 'http://192.168.99.100:32768/rest/api/2/issue/' + id + '/worklog',
-            headers: {
-               // 'Authorization': 'Basic ' + btoa(username + ':' + password),
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify(parameters.fields),
-            contentType: 'application/json',
-            dataType: 'json'
-        });
+    function toUnicode(str){
+        var result = "";
+        for(var i = 0; i < str.length; i++){
+            result += "\\u" + ("000" + str[i].charCodeAt(0).toString(16)).substr(-4);
+        }
+        return result;
+    }
 
+    function ajaxWrapper (urlExtension, optionsOverrides) {
+        var options = $.extend({}, apiDefaults, optionsOverrides);
+        options.url += urlExtension;
+        return $.ajax(options);
     }
 
 }
