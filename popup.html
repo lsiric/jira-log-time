@@ -8,9 +8,13 @@
     <style type="text/css">
 
         #error {
+            padding: 10px 0;
             color: red;
             font-weight: bold;
-            display: none;
+        }
+        #loading {
+          padding: 10px 0;
+          display: none;
         }
         .table-container {
           width: 600px;
@@ -42,8 +46,8 @@
         <tr>
             <th width="20%">ID</th>
             <th width="25%">Description</th>
-            <th width="20%">Total time</th>
-            <th width="15%">Log time</th>
+            <th width="25%">Total time</th>
+            <th width="10%">Log time</th>
             <th width="10%">Date</th>
             <th width="10%">Action</th>
         </tr>
@@ -51,7 +55,11 @@
 
     </div>
 
-    <div id="issues"></div>
-    <div id="error">Loading...</div>
+    <div id="error"></div>
+
+    <div id="loading">
+      Loading...
+    </div>
+
   </body>
 </html>

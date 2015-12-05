@@ -194,7 +194,11 @@ function onDOMContentLoaded () {
 
 
 
-        // Helper function to build html elements
+        /* 
+            Helper functions 
+        */
+
+        // html generator
         function buildHTML (tag, html, attrs) {
 
             var element = document.createElement(tag);
@@ -209,7 +213,7 @@ function onDOMContentLoaded () {
             return element;
         }
 
-
+        // worklog sum in 'jira format'
         function sumWorklogs (worklogs) {
 
             var totalSeconds = worklogs.reduce(function(a, b){
@@ -228,12 +232,6 @@ function onDOMContentLoaded () {
 
         }
 
-        Date.prototype.toDateInputValue = (function() {
-            var local = new Date(this);
-            local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
-            return local.toJSON().slice(0,10);
-        });
-
         function genericResponseError (error) {
             errorMessage('Server error ' + error.responseText);
         }
@@ -243,6 +241,21 @@ function onDOMContentLoaded () {
             error.innerText = message;
             error.style.display = 'block';
         }
+
+
+        $(document).ajaxStart(function() {
+            document.getElementById('loading').style.display = 'block';
+        })
+        .ajaxComplete(function() {
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        // adding helper to pre-select today's date in the datepicker
+        Date.prototype.toDateInputValue = (function() {
+            var local = new Date(this);
+            local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+            return local.toJSON().slice(0,10);
+        });
 
     }
 
