@@ -51,7 +51,8 @@ function onDOMContentLoaded () {
                 $.when.apply($, promises)
                 .done(function () {
 
-                    drawIssuesTable(options.description, issuesResponse.issues);
+                    setProjectTitle(options.description);
+                    drawIssuesTable(issuesResponse.issues);
 
                 });
 
@@ -76,97 +77,90 @@ function onDOMContentLoaded () {
 
         }
 
-        function drawIssuesTable (projectName, issues) {
 
-            var table = document.createElement('table');
 
-            addTableHeader(table, projectName);
 
-            for (var i = 0; i < issues.length; i++) {
+        // HTML generating
 
-                var issue = issues[i];
+        function setProjectTitle (projectName) {
+            document.getElementById('project-name').innerText = projectName;
+        }
 
-                addTableRow(
-                    table, 
-                    issue.key,
-                    issue.fields.summary,
-                    issue.totalTime
-                );
+        function drawIssuesTable (issues) {
 
-            };
+            var logTable = document.getElementById('jira-log-time-table');
 
-            document.getElementById('issues').appendChild(table);
+            issues.forEach(function (issue) {
+                var row = generateLogTableRow(issue.key, issue.fields.summary, issue.totalTime);
+                logTable.appendChild(row)
+            });
 
         }
 
-        function addTableHeader (table, projectName) {
+        function generateLogTableRow (id, summary, time) {
 
-            var header = document.createElement('th');
-            header.setAttribute('colspan', 3);
-            var td = document.createElement('td');
-            td.innerText = projectName;
-            header.appendChild(td);
-            table.appendChild(header);
-            return table;
+            // Issue ID cell
+            var idCell = buildHTML('td', id, {
+                class: 'issue-id'
+            });
 
-        }
+            // Issue summary cell
+            var summaryCell = buildHTML('td', summary, {
+                class: 'issue-summary'
+            });
 
-        function addTableRow (table, id, summary, time) {
-
-            var row = document.createElement('tr');
-            var td1 = document.createElement('td');
-            var td2 = document.createElement('td');
-            var td3 = document.createElement('td');
-
-            td1.innerText = id;
-            td1.className = 'issue-id';
-
-            td2.innerText = summary;
-            td2.className = 'issue-summary';
-
-            td3.innerText = time;
-            td3.className = 'issue-total-time-spent';
-            td3.setAttribute('data-issue-id', id);
-
-            row.appendChild(td1);
-            row.appendChild(td2);
-            row.appendChild(td3);
-
-            addTimeInput(row, id);
-            addActionButton(row, id);
-
-            table.appendChild(row);
-            return table;
-
-        }
-
-        function addTimeInput (parent, issueId) {
-
-            var td = document.createElement('td');
+            // Issue total worklog sum
+            var totalTimeCell = buildHTML('td', time, {
+                class: 'issue-total-time-spent',
+                'data-issue-id' : id
+            });
             
-            var input = document.createElement('input');
-            input.className = 'issue-time-input';
-            input.setAttribute('data-issue-id', issueId);
-
-            td.appendChild(input);
-            parent.appendChild(td);
+            // Time input 
+            var timeInput = buildHTML('input', null, {
+                class: 'issue-time-input',
+                'data-issue-id': id
+            });
             
-        }
+            // Time input cell
+            var timeInputCell = buildHTML('td');
+            timeInputCell.appendChild(timeInput);
 
-        function addActionButton (parent, issueId) {
-
-            var td = document.createElement('td');
-            td.className = 'issue-actions';
+            // Date input
+            var dateInput = buildHTML('input', null, {
+                type: 'date',
+                class: 'log-date-input',
+                value: new Date().toDateInputValue(),
+                'data-issue-id': id
+            });
             
-            var button = document.createElement('button');
-            button.setAttribute('data-issue-id', issueId);
-            button.className = 'log-time-btn';
-            button.innerText = 'Log Time';
+            // Date input cell
+            var dateInputCell = buildHTML('td');
+            dateInputCell.appendChild(dateInput);
 
-            button.addEventListener('click', logTimeClick);
+            var actionButton = buildHTML('input', null, {
+                type: 'button',
+                value: 'Log Time',
+                class: 'log-time-btn',
+                'data-issue-id': id
+            });
 
-            td.appendChild(button);
-            parent.appendChild(td);
+            actionButton.addEventListener('click', logTimeClick);
+
+            // Action button cell
+            var actionCell = buildHTML('td');
+            actionCell.appendChild(actionButton);
+
+            // building up row from cells
+            var row = buildHTML('tr');
+
+            row.appendChild(idCell);
+            row.appendChild(summaryCell);
+            row.appendChild(totalTimeCell);
+            row.appendChild(timeInputCell);
+            row.appendChild(dateInputCell);
+            row.appendChild(actionCell);
+
+            return row;
 
         }
 
@@ -177,8 +171,9 @@ function onDOMContentLoaded () {
 
             var issueId = evt.target.getAttribute('data-issue-id')
             var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
+            var dateString = document.querySelector('input[class=log-date-input][data-issue-id=' + issueId + ']').value;
 
-            JIRA.updateWorklog(issueId, timeInput.value)
+            JIRA.updateWorklog(issueId, timeInput.value, new Date(dateString))
             .success(function (data) {
                 refreshWorklog(issueId);
             })
@@ -195,6 +190,25 @@ function onDOMContentLoaded () {
             });
 
         }
+
+
+
+
+        // Helper function to build html elements
+        function buildHTML (tag, html, attrs) {
+
+            var element = document.createElement(tag);
+
+            if(html) element.innerHTML = html;
+
+            for (attr in attrs) {
+                if(attrs[attr] === false) continue;
+                element.setAttribute(attr, attrs[attr]);
+            }
+
+            return element;
+        }
+
 
         function sumWorklogs (worklogs) {
 
@@ -214,16 +228,14 @@ function onDOMContentLoaded () {
 
         }
 
-        function genericResponseError (error) {
-            var msg = '';
-            if(error.responseText){
-                var resp = JSON.parse(error.responseText);
-                msg = resp.errorMessages[0];
-            }else{
-                msg = error.statusText;
-            }
-            errorMessage(msg);
+        Date.prototype.toDateInputValue = (function() {
+            var local = new Date(this);
+            local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+            return local.toJSON().slice(0,10);
+        });
 
+        function genericResponseError (error) {
+            errorMessage('Server error ' + error.responseText);
         }
 
         function errorMessage (message) {

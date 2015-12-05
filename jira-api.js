@@ -42,12 +42,12 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         return ajaxWrapper('/issue/' + id + '/worklog');
     }
 
-    function updateWorklog (id, timeSpent) {
+    function updateWorklog (id, timeSpent, date) {
         var url = '/issue/' + id + '/worklog';
         var options = {
             type: 'POST',
             data: JSON.stringify({
-                "started": new Date().toISOString().replace('Z', '+0530'), // TODO: Problems with the timezone, investigate
+                "started": date.toISOString().replace('Z', '+0530'), // TODO: Problems with the timezone, investigate
                 "timeSpent": timeSpent
             })
         }

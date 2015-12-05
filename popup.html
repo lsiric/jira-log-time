@@ -6,55 +6,50 @@
     <script src="jira-api.js"></script>
     <script src="popup.js"></script>
     <style type="text/css">
-        table{
-            width: 400px;
-        }
 
-        .issue-id {
-            width: 200px;
-        }
-
-        .issue-summary{
-            width: 400px;
-        }
-
-        .issue-total-time-spent {
-            width: 250px;
-            font-weight: bold;
-            margin: 0 10px;
-        }
-
-        .issue-actions {
-            width: 200px;
-        }
-
-        .issue-time-input {
-            width: 50px;
-        }
-
-        .log-time-btn {
-            
-        }
         #error {
-            width: 400px;
             color: red;
             font-weight: bold;
             display: none;
         }
+        .table-container {
+          width: 600px;
+        }
+        #project-name {
+          font-weight: bold;
+        }
+        table {
+           width: 100%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+
     </style>
   </head>
   <body>
-    <div class="project-name"></div>
-    <table class="jira-log-time-table">
-      <th>
-          <td>ID</td>
-          <td>Description</td>
-          <td>Total time</td>
-          <td>Date</td>
-          <td>Log time</td>
-          <td>Action</td>
-      </th>
-    </table>
+
+    <h3 id="project-name"></h3>
+
+    <div class="table-container">
+        
+      <table id="jira-log-time-table">
+        <tr>
+            <th width="20%">ID</th>
+            <th width="25%">Description</th>
+            <th width="20%">Total time</th>
+            <th width="15%">Log time</th>
+            <th width="10%">Date</th>
+            <th width="10%">Action</th>
+        </tr>
+      </table>
+
+    </div>
 
     <div id="issues"></div>
     <div id="error">Loading...</div>
