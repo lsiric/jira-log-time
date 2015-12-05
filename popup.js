@@ -1,96 +1,78 @@
-(function () {
+document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
 
-    document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+function onDOMContentLoaded () {
 
-    function onDOMContentLoaded () {
+    chrome.storage.sync.get({
+        username: '',
+        password: '',
+        description: '',
+        baseUrl: '',
+        apiExtension: '',
+        jql: ''
+    }, 
+    init);
 
-        var JIRA = null;
+    function init (options) {
 
-        chrome.storage.sync.get({
-            username: '',
-            password: '',
-            description: '',
-            baseUrl: '',
-            apiExtension: '',
-            jql: ''
-        }, 
-        loadOptionsSuccess);
+        var error = '';
+
+        if(!options.username){
+            return errorMessage('Missing username');
+        }
+        if(!options.password){
+            return errorMessage('Missing password');
+        }
+        if(!options.baseUrl){
+            return errorMessage('Missing base URL');
+        }
+        if(!options.apiExtension){
+            return errorMessage('Missing API extension');
+        }
+
+        var JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password, options.jql);
+
+        JIRA.login()
+        .success(onLoginSuccess)
+        .error(genericResponseError);
 
 
-        function loadOptionsSuccess (options) {
+        function onLoginSuccess () {
 
-            var error = '';
+            JIRA.getAssignedIssues()
+            .success(function (issuesResponse) {
 
-            if(!options.username){
-                error += 'Missing username';
-            }
-            if(!options.password){
-                error += '; Missing password';
-            }
-            if(!options.baseUrl){
-                error += '; Missing base URL';
-            }
-            if(!options.apiExtension){
-                error += '; Missing API extension';
-            }
+                var promises = [];
 
-            if(error){
-                errorMessage(error);
-            }else{
+                issuesResponse.issues.forEach(function (issue) {
+                    promises.push(getWorklog(issue.key, issuesResponse.issues));
+                });
 
-                JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password, options.jql);
+                // when all worklogs are fetched, draw the table
+                $.when.apply($, promises)
+                .done(function () {
 
-                initPlugin(options.description);
+                    drawIssuesTable(options.description, issuesResponse.issues);
 
-            }
+                });
+
+            })
+            .error(genericResponseError);
 
         }
 
-        function initPlugin (description) {
+        function getWorklog (id, issues) {
 
-            JIRA.login()
-            .success(onLoginSuccess)
+            return JIRA.getIssueWorklog(id)
+            .success(function (worklogResponse) {
+
+                issues.forEach(function (issue) {
+                    if(issue.key === id){
+                        issue.totalTime = sumWorklogs(worklogResponse.worklogs);
+                    } 
+                });
+
+            })
             .error(genericResponseError);
-
-            function onLoginSuccess () {
-
-                JIRA.getAssignedIssues()
-                .success(function (issuesResponse) {
-
-                    var promises = [];
-
-                    issuesResponse.issues.forEach(function (issue) {
-                        promises.push(getWorklog(issue.key));
-                    });
-
-                    function getWorklog (id) {
-
-                        return JIRA.getIssueWorklog(id)
-                        .success(function (worklogResponse) {
-
-                            issuesResponse.issues.forEach(function (issue) {
-                                if(issue.key === id){
-                                    issue.totalTime = sumWorklogs(worklogResponse.worklogs);
-                                } 
-                            });
-
-                        })
-                        .error(genericResponseError);
-
-                    }
-                    // when all worklogs are fetched, draw the table
-                    $.when.apply($, promises)
-                    .done(function () {
-
-                        drawIssuesTable(description, issuesResponse.issues);
-                        errorMessage('');
-
-                    });
-
-                })
-                .error(genericResponseError);
-
-            }
 
         }
 
@@ -245,9 +227,12 @@
         }
 
         function errorMessage (message) {
-            document.getElementById('error').innerText = message;
+            var error = document.getElementById('error')
+            error.innerText = message;
+            error.style.display = 'block';
         }
 
     }
-    
-})(); 
+
+}
+
