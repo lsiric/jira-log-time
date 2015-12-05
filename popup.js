@@ -166,12 +166,19 @@ function onDOMContentLoaded () {
 
         function logTimeClick (evt) {
 
-            // clear error messages
-            errorMessage('');
-
             var issueId = evt.target.getAttribute('data-issue-id')
             var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
             var dateString = document.querySelector('input[class=log-date-input][data-issue-id=' + issueId + ']').value;
+
+            // validate time input
+            if(!timeInput.value.match(/[0-9]{1,4}[wdhm]/g)){
+                errorMessage('Time input in wrong format. You can specify a time unit after a time value "X", such as Xw, Xd, Xh or Xm, to represent weeks (w), days (d), hours (h) and minutes (m), respectively.');
+                return;
+            }
+            else{
+                // clear error messages
+                errorMessage('');
+            }
 
             JIRA.updateWorklog(issueId, timeInput.value, new Date(dateString))
             .success(function (data) {
