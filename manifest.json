@@ -17,6 +17,6 @@
   "permissions": [
    "activeTab",
    "storage",
-   "http://192.168.99.100:32768/*"
+   "<all_urls>"
    ]
 }

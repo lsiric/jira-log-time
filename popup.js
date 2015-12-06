@@ -14,8 +14,6 @@ function onDOMContentLoaded () {
 
     function init (options) {
 
-        var error = '';
-
         if(!options.username){
             return errorMessage('Missing username');
         }
@@ -35,6 +33,9 @@ function onDOMContentLoaded () {
         .success(onLoginSuccess)
         .error(genericResponseError);
 
+        function onLoginError (error) {
+            errorMessage('Login failed');
+        }
 
         function onLoginSuccess () {
 
@@ -61,6 +62,15 @@ function onDOMContentLoaded () {
 
         }
 
+
+
+
+
+
+        /*
+            Worklog functions
+        */
+
         function getWorklog (id, issues) {
 
             return JIRA.getIssueWorklog(id)
@@ -77,11 +87,34 @@ function onDOMContentLoaded () {
 
         }
 
+        // worklog sum in 'jira format'
+        function sumWorklogs (worklogs) {
+
+            var totalSeconds = worklogs.reduce(function(a, b){
+                return {timeSpentSeconds: a.timeSpentSeconds + b.timeSpentSeconds}
+            }, {timeSpentSeconds:0}).timeSpentSeconds;
+
+            var totalWeeks = Math.floor(totalSeconds / 144000);
+            totalSeconds = totalSeconds % 144000;
+            var totalDays = Math.floor(totalSeconds / 28800);
+            totalSeconds = totalSeconds % 28800;
+            var totalHours = Math.floor(totalSeconds / 3600);
+            totalSeconds = totalSeconds % 3600;
+            var totalMinutes = Math.floor(totalSeconds / 60);
+
+            return (totalWeeks ? totalWeeks + 'w' : '') + ' ' + (totalDays ? totalDays + 'd' : '') + ' ' + (totalHours ? totalHours + 'h' : '') + ' ' + (totalMinutes ? totalMinutes + 'min' : '');
+
+        }
 
 
 
-        // HTML generating
 
+
+
+        /*
+            HTML interaction
+        */
+ 
         function setProjectTitle (projectName) {
             document.getElementById('project-name').innerText = projectName;
         }
@@ -164,6 +197,14 @@ function onDOMContentLoaded () {
 
         }
 
+
+
+
+
+
+        /*
+            Log time button
+        */
         function logTimeClick (evt) {
 
             var issueId = evt.target.getAttribute('data-issue-id')
@@ -201,6 +242,8 @@ function onDOMContentLoaded () {
 
 
 
+
+
         /* 
             Helper functions 
         */
@@ -220,36 +263,23 @@ function onDOMContentLoaded () {
             return element;
         }
 
-        // worklog sum in 'jira format'
-        function sumWorklogs (worklogs) {
-
-            var totalSeconds = worklogs.reduce(function(a, b){
-                return {timeSpentSeconds: a.timeSpentSeconds + b.timeSpentSeconds}
-            }, {timeSpentSeconds:0}).timeSpentSeconds;
-
-            var totalWeeks = Math.floor(totalSeconds / 144000);
-            totalSeconds = totalSeconds % 144000;
-            var totalDays = Math.floor(totalSeconds / 28800);
-            totalSeconds = totalSeconds % 28800;
-            var totalHours = Math.floor(totalSeconds / 3600);
-            totalSeconds = totalSeconds % 3600;
-            var totalMinutes = Math.floor(totalSeconds / 60);
-
-            return (totalWeeks ? totalWeeks + 'w' : '') + ' ' + (totalDays ? totalDays + 'd' : '') + ' ' + (totalHours ? totalHours + 'h' : '') + ' ' + (totalMinutes ? totalMinutes + 'min' : '');
-
+        // Generic ajax error
+        function genericResponseError (e, status, error) {
+            if(e.responseJSON && e.responseJSON.errorMessages && typeof e.responseJSON.errorMessages === 'Array'){
+                errorMessage(e.responseJSON.errorMessages.join(' '));
+            }else {
+                errorMessage('Error: ' + e.status + ' - ' + error);
+            }
         }
 
-        function genericResponseError (error) {
-            errorMessage('Server error ' + error.responseText);
-        }
-
+        // Popup error message
         function errorMessage (message) {
             var error = document.getElementById('error')
             error.innerText = message;
             error.style.display = 'block';
         }
 
-
+        // Popup loading indicator
         $(document).ajaxStart(function() {
             document.getElementById('loading').style.display = 'block';
         })
@@ -257,7 +287,7 @@ function onDOMContentLoaded () {
             document.getElementById('loading').style.display = 'none';
         });
 
-        // adding helper to pre-select today's date in the datepicker
+        // Date helper to pre-select today's date in the datepicker
         Date.prototype.toDateInputValue = (function() {
             var local = new Date(this);
             local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
