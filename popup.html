@@ -17,7 +17,6 @@
           display: none;
         }
         .table-container {
-          width: 600px;
         }
         #project-name {
           font-weight: bold;
@@ -32,6 +31,7 @@
         th, td {
             padding: 5px;
             text-align: left;
+            width: 200px;
         }
 
     </style>
@@ -43,14 +43,16 @@
     <div class="table-container">
         
       <table id="jira-log-time-table">
-        <tr>
-            <th width="20%">ID</th>
-            <th width="25%">Description</th>
-            <th width="25%">Total time</th>
-            <th width="10%">Log time</th>
-            <th width="10%">Date</th>
-            <th width="10%">Action</th>
-        </tr>
+        <thead>
+          <tr>
+              <th>ID</th>
+              <th>Description</th>
+              <th>Total time</th>
+              <th>Log time</th>
+              <th>Date</th>
+              <th>Action</th>
+          </tr>          
+        </thead>
       </table>
 
     </div>

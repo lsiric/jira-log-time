@@ -122,11 +122,14 @@ function onDOMContentLoaded () {
         function drawIssuesTable (issues) {
 
             var logTable = document.getElementById('jira-log-time-table');
+            var tbody = buildHTML('tbody');
 
             issues.forEach(function (issue) {
                 var row = generateLogTableRow(issue.key, issue.fields.summary, issue.totalTime);
-                logTable.appendChild(row)
+                tbody.appendChild(row)
             });
+
+            logTable.appendChild(tbody);
 
         }
 
