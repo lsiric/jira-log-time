@@ -137,13 +137,12 @@ function onDOMContentLoaded () {
 
             // Issue ID cell
             var idCell = buildHTML('td', id, {
-                class: 'issue-id',
-                style: 'width="200"'
+                class: 'issue-id'
             });
 
             // Issue summary cell
             var summaryCell = buildHTML('td', summary, {
-                class: 'issue-summary'
+                class: 'issue-summary truncate'
             });
 
             // Issue total worklog sum
