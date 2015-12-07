@@ -134,7 +134,8 @@ function onDOMContentLoaded () {
 
             // Issue ID cell
             var idCell = buildHTML('td', id, {
-                class: 'issue-id'
+                class: 'issue-id',
+                style: 'width="200"'
             });
 
             // Issue summary cell

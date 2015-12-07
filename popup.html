@@ -1,65 +1,74 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Jira Log Time</title>
-    <script src="jquery.js"></script>
-    <script src="jira-api.js"></script>
-    <script src="popup.js"></script>
-    <style type="text/css">
+	<head>
+		<title>Jira Log Time</title>
+		<script src="jquery.js"></script>
+		<script src="jira-api.js"></script>
+		<script src="popup.js"></script>
+		<style type="text/css">
 
-        #error {
-            padding: 10px 0;
-            color: red;
-            font-weight: bold;
-        }
-        #loading {
-          padding: 10px 0;
-          display: none;
-        }
-        .table-container {
-          width: 600px;
-        }
-        #project-name {
-          font-weight: bold;
-        }
-        table {
-           width: 100%;
-        }
-        table, th, td {
-            border: 1px solid black;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 5px;
-            text-align: left;
-        }
+				#error {
+					padding: 10px 0;
+					color: red;
+					font-weight: bold;
+				}
+				#loading {
+					padding: 10px 0;
+					display: none;
+				}
+				.table-container {
+					width: 600px;
+				}
+				#project-name {
+					font-size: 18px;
+					color: #666666;
+					font-weight: normal;
+				}
+				table {
+					width: 100%;
+					table-layout: fixed;
+				}
+				table, th, td {
+					border-collapse: collapse;
+				}
+				th {
+					font-size: 11px;
+					font-weight: bold;
+					color: #999999;
+					text-transform: uppercase;
+					border-bottom: 2px solid #dddddd;
+				}
+				th, td {
+						padding: 5px;
+						text-align: left;
+				}
 
-    </style>
-  </head>
-  <body>
+		</style>
+	</head>
+	<body>
 
-    <h3 id="project-name"></h3>
+		<h3 id="project-name"></h3>
 
-    <div class="table-container">
-        
-      <table id="jira-log-time-table">
-        <tr>
-            <th width="20%">ID</th>
-            <th width="25%">Description</th>
-            <th width="25%">Total time</th>
-            <th width="10%">Log time</th>
-            <th width="10%">Date</th>
-            <th width="10%">Action</th>
-        </tr>
-      </table>
+		<div class="table-container">
+				
+			<table id="jira-log-time-table">
+				<tr>
+					<th width="20%">ID</th>
+					<th width="50%">Description</th>
+					<th>Total time</th>
+					<th>Log time</th>
+					<th>Date</th>
+					<th>Action</th>
+				</tr>
+			</table>
 
-    </div>
+		</div>
 
-    <div id="error"></div>
+		<div id="error"></div>
 
-    <div id="loading">
-      Loading...
-    </div>
+		<div id="loading">
+			Loading...
+		</div>
 
-  </body>
+	</body>
 </html>
