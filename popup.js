@@ -29,6 +29,8 @@ function onDOMContentLoaded () {
 
         var JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password, options.jql);
 
+        setupLoader();
+
         JIRA.login()
         .success(onLoginSuccess)
         .error(genericResponseError);
@@ -282,13 +284,16 @@ function onDOMContentLoaded () {
             error.style.display = 'block';
         }
 
-        // Popup loading indicator
-        $(document).ajaxStart(function() {
-            document.getElementById('loading').style.display = 'block';
-        })
-        .ajaxComplete(function() {
-            document.getElementById('loading').style.display = 'none';
-        });
+        function setupLoader () {
+            // Popup loading indicator
+            var indicator = document.getElementById('loading');
+            $(document).bind("ajaxSend", function(){
+                indicator.style.display = 'block';
+            }).bind("ajaxStop", function(){
+                indicator.style.display = 'none';
+            });
+        }
+
 
         // Date helper to pre-select today's date in the datepicker
         Date.prototype.toDateInputValue = (function() {
