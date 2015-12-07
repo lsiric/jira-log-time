@@ -286,7 +286,8 @@ function onDOMContentLoaded () {
 
         function setupLoader () {
             // Popup loading indicator
-            var indicator = document.getElementById('loading');
+            var indicator = document.getElementById('loader-container');
+
             $(document).bind("ajaxSend", function(){
                 indicator.style.display = 'block';
             }).bind("ajaxStop", function(){

@@ -27,8 +27,8 @@
 					font-weight: bold;
 				}
 
-				#loading {
-					
+				#loader-container {
+					display: none;
 				}
 
 				#project-name {
@@ -173,7 +173,7 @@
 
 		<h3 id="project-name"></h3>
 
-		<div class="table-container">
+		<div id="table-container">
 			<table id="jira-log-time-table">
 				<thead>
 					<tr>
@@ -186,11 +186,12 @@
 					</tr>          
 				</thead>
 			</table>
+			<div id="loader-container">
+				<div class="loader"></div>
+			</div>
 		</div>
 
 		<div id="error"></div>
-
-		<div id="loading" class="loader"></div>
 
 		<div id="brand">
 			<div id="logo">
