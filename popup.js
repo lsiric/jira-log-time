@@ -32,8 +32,7 @@ function onDOMContentLoaded () {
         setupLoader();
 
         JIRA.login()
-        .success(onLoginSuccess)
-        .error(genericResponseError);
+        .then(onLoginSuccess, genericResponseError);
 
         function onLoginError (error) {
             errorMessage('Login failed');
@@ -42,25 +41,28 @@ function onDOMContentLoaded () {
         function onLoginSuccess () {
 
             JIRA.getAssignedIssues()
-            .success(function (issuesResponse) {
+            .then(onFetchSuccess, genericResponseError);
+
+            function onFetchSuccess (response) {
 
                 var promises = [];
 
-                issuesResponse.issues.forEach(function (issue) {
-                    promises.push(getWorklog(issue.key, issuesResponse.issues));
+                var issues = response.issues;
+
+                issues.forEach(function (issue) {
+                    promises.push(getWorklog(issue.key, issues));
                 });
 
                 // when all worklogs are fetched, draw the table
-                $.when.apply($, promises)
-                .done(function () {
+                Promise.all(promises)
+                .then(function () {
 
                     setProjectTitle(options.description);
-                    drawIssuesTable(issuesResponse.issues);
+                    drawIssuesTable(issues);
 
                 });
 
-            })
-            .error(genericResponseError);
+            }
 
         }
 
@@ -76,16 +78,19 @@ function onDOMContentLoaded () {
         function getWorklog (id, issues) {
 
             return JIRA.getIssueWorklog(id)
-            .success(function (worklogResponse) {
+            .then(onWorklogFetchSuccess, genericResponseError);
+
+            function onWorklogFetchSuccess (response) {
+
+                var worklogs = response.worklogs;
 
                 issues.forEach(function (issue) {
                     if(issue.key === id){
-                        issue.totalTime = sumWorklogs(worklogResponse.worklogs);
+                        issue.totalTime = sumWorklogs(worklogs);
                     } 
                 });
 
-            })
-            .error(genericResponseError);
+            }
 
         }
 
@@ -227,20 +232,22 @@ function onDOMContentLoaded () {
             }
 
             JIRA.updateWorklog(issueId, timeInput.value, new Date(dateString))
-            .success(function (data) {
+            .then(function (data) {
                 refreshWorklog(issueId);
-            })
-            .error(genericResponseError);
+            }, genericResponseError);
 
         }
 
         function refreshWorklog (issueId) {
 
             JIRA.getIssueWorklog(issueId)
-            .success(function (data) {
+            .then(onWorklogFetchSuccess, genericResponseError);
+
+            function onWorklogFetchSuccess (response) {
+                var worklogs = response.worklogs;
                 var totalTimeSpent = document.querySelector('td[data-issue-id=' + issueId + ']');
-                totalTimeSpent.innerText = sumWorklogs(data.worklogs);
-            });
+                totalTimeSpent.innerText = sumWorklogs(worklogs);
+            }
 
         }
 
@@ -269,11 +276,17 @@ function onDOMContentLoaded () {
         }
 
         // Generic ajax error
-        function genericResponseError (e, status, error) {
-            if(e.responseJSON && e.responseJSON.errorMessages && typeof e.responseJSON.errorMessages === 'Array'){
-                errorMessage(e.responseJSON.errorMessages.join(' '));
+        function genericResponseError (response, status, error) {
+            var parsed = '';
+            try{
+                parsed = response;
+            }catch(e){
+                parsed = 'error';
+            }
+            if(Array.isArray(parsed.errorMessages)){
+                errorMessage(parsed.errorMessages.join(' '));
             }else {
-                errorMessage('Error: ' + e.status + ' - ' + error);
+                errorMessage('Error: ' + status + ' - ' + error);
             }
         }
 
@@ -288,11 +301,14 @@ function onDOMContentLoaded () {
             // Popup loading indicator
             var indicator = document.getElementById('loader-container');
 
-            $(document).bind("ajaxSend", function(){
+            document.addEventListener('jiraStart', function () {
                 indicator.style.display = 'block';
-            }).bind("ajaxStop", function(){
+            }, false);
+
+            document.addEventListener('jiraStop', function () {
                 indicator.style.display = 'none';
-            });
+            }, false);
+
         }
 
 

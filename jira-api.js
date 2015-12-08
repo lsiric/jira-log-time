@@ -1,13 +1,15 @@
 function JiraAPI (baseUrl, apiExtension, username, password, jql) {
 
+    var ACTIVE_REQUESTS = 0;
+
     var apiDefaults = {
         type: 'GET',
         url : baseUrl + apiExtension,
         headers: {
             'Content-Type': 'application/json'
         },
-        contentType: 'application/json',
-        dataType: 'json'
+        responseType: 'json',
+        data: ''
     };
 
     return {
@@ -17,6 +19,8 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         getIssueWorklog : getIssueWorklog,
         updateWorklog : updateWorklog
     };
+
+
 
 
 
@@ -55,9 +59,78 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
     }
 
     function ajaxWrapper (urlExtension, optionsOverrides) {
-        var options = $.extend({}, apiDefaults, optionsOverrides);
+
+        var options = extend(apiDefaults, optionsOverrides || {});
+
         options.url += urlExtension;
-        return $.ajax(options);
+
+        return new Promise(function(resolve, reject) {
+
+            var req = new XMLHttpRequest();
+
+            req.open(options.type, options.url, true);
+
+            req.responseType = options.responseType;
+
+            req.onload = function() {
+                if (req.status >= 200 && req.status < 400) {
+                    resolve(req.response);
+                }
+                else {
+                    reject(req.response, req.status, req.statusText);
+                }
+
+                if (!(--ACTIVE_REQUESTS)) {
+                    dispatchEvent('jiraStop', document);
+                }
+
+            };
+
+            req.onerror = function() {
+                reject('Unknown Error');
+                dispatchEvent('jiraError', document);
+            };
+
+            for(header in options.headers){
+                req.setRequestHeader(header, options.headers[header]);
+            }
+
+            req.send(options.data);
+
+            if (ACTIVE_REQUESTS++ === 0 ) {
+                dispatchEvent('jiraStart', document);
+            }
+
+        });
+
     }
+
+    // Helper functions
+    function dispatchEvent (name, element) {
+        var event = new Event(name);
+        element.dispatchEvent(event);
+    }
+
+    // Simple extend function
+    function extend (target, overrides) {
+
+        var extended = Object.create(target);
+
+        Object.keys(target).map(function (prop) {
+            extended[prop] = target[prop];
+        });
+
+        Object.keys(overrides).map(function (prop) {
+
+            if(typeof overrides[prop] === 'object'){
+                extended[prop] = extend(extended[prop], overrides[prop]);
+            }else{
+                extended[prop] = overrides[prop];
+            }
+        });
+
+        return extended;
+
+    };
 
 }
