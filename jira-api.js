@@ -52,7 +52,7 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         var options = {
             type: 'POST',
             data: JSON.stringify({
-                "started": date.toISOString().replace('Z', '+0530'), // TODO: Problems with the timezone, investigate
+                "started": date.toISOString().replace('Z', '+0530'), // TODO: Quick fix - Problems with the timezone, investigate
                 "timeSpent": timeSpent
             })
         }
@@ -61,44 +61,62 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
 
     function ajaxWrapper (urlExtension, optionsOverrides) {
 
+        // merge default and override options
         var options = extend(apiDefaults, optionsOverrides || {});
 
+        // concat url
         options.url += urlExtension;
 
+        // return promise
         return new Promise(function(resolve, reject) {
 
             var req = new XMLHttpRequest();
 
+            // open request
             req.open(options.type, options.url, true);
 
+            // set response type (json)
             req.responseType = options.responseType;
 
+            // on load logidc
             req.onload = function() {
+
+                // consider all statuses between 200 and 400 successful
                 if (req.status >= 200 && req.status < 400) {
                     resolve(req.response);
                 }
+                // all other ones are considered to be errors
                 else {
                     reject(req.response, req.status, req.statusText);
                 }
 
+                // keep the count of active XMLHttpRequest objects
                 if (!(--ACTIVE_REQUESTS)) {
+
+                    //if it's 0 dispatch a global event
                     dispatchEvent('jiraStop', document);
                 }
 
             };
 
+            // Unpredicted error
             req.onerror = function() {
                 reject('Unknown Error');
                 dispatchEvent('jiraError', document);
             };
 
+            // set all headers
             for(header in options.headers){
                 req.setRequestHeader(header, options.headers[header]);
             }
 
+            // send the request
             req.send(options.data);
 
+            // increment the count of active XMLHttpRequest objects
             if (ACTIVE_REQUESTS++ === 0 ) {
+
+                // if it's the first one in the queue, dispatch a global event
                 dispatchEvent('jiraStart', document);
             }
 
@@ -106,7 +124,12 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
 
     }
 
-    // Helper functions
+
+
+    /*
+        Helper functions
+    */
+    // Event dispatcher
     function dispatchEvent (name, element) {
         var event = new Event(name);
         element.dispatchEvent(event);
@@ -115,17 +138,23 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
     // Simple extend function
     function extend (target, overrides) {
 
+        // new empty object
         var extended = Object.create(target);
 
+        // copy all properties from default
         Object.keys(target).map(function (prop) {
             extended[prop] = target[prop];
         });
 
+        // iterate through overrides
         Object.keys(overrides).map(function (prop) {
 
+            // if the attribute is an object, extend it too
             if(typeof overrides[prop] === 'object'){
                 extended[prop] = extend(extended[prop], overrides[prop]);
-            }else{
+            }
+            // otherwise just assign value to the extended object
+            else{
                 extended[prop] = overrides[prop];
             }
         });

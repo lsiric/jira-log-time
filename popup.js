@@ -14,6 +14,7 @@ function onDOMContentLoaded () {
 
     function init (options) {
 
+        // mandatory fields check
         if(!options.username){
             return errorMessage('Missing username');
         }
@@ -27,10 +28,13 @@ function onDOMContentLoaded () {
             return errorMessage('Missing API extension');
         }
 
+        // Jira API instantiation
         var JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password, options.jql);
 
+        // Global events listener for hiding/showing loading spinner
         setupLoader();
 
+        // Fetch assigned issues
         JIRA.getAssignedIssues()
         .then(onFetchSuccess, genericResponseError);
 
@@ -40,15 +44,18 @@ function onDOMContentLoaded () {
 
             var issues = response.issues;
 
+            // fetch worklogs for every single issue
             issues.forEach(function (issue) {
+                // queue all requests
                 promises.push(getWorklog(issue.key, issues));
             });
 
-            // when all worklogs are fetched, draw the table
+            // when all worklogs are fetched, begin html interaction
             Promise.all(promises)
             .then(function () {
-
+                // draw project title
                 setProjectTitle(options.description);
+                // draw html table with issues and worklogs 
                 drawIssuesTable(issues);
 
             });
@@ -62,18 +69,18 @@ function onDOMContentLoaded () {
             Worklog functions
         */
 
+        // Issues are passed in so we can construct entire issue object with worklogs before we draw the html table
         function getWorklog (id, issues) {
 
+            // Fetch worklog
             return JIRA.getIssueWorklog(id)
             .then(onWorklogFetchSuccess, genericResponseError);
 
             function onWorklogFetchSuccess (response) {
 
-                var worklogs = response.worklogs;
-
                 issues.forEach(function (issue) {
                     if(issue.key === id){
-                        issue.totalTime = sumWorklogs(worklogs);
+                        issue.totalTime = sumWorklogs(response.worklogs);
                     } 
                 });
 
@@ -81,22 +88,31 @@ function onDOMContentLoaded () {
 
         }
 
-        // worklog sum in 'jira format'
+        // Worklogs sum in 'jira format' (1w 2d 3h 44m)
         function sumWorklogs (worklogs) {
 
+            // Sum all worklog times seconds
             var totalSeconds = worklogs.reduce(function(a, b){
                 return {timeSpentSeconds: a.timeSpentSeconds + b.timeSpentSeconds}
             }, {timeSpentSeconds:0}).timeSpentSeconds;
 
+            // Get how many weeks in totalSeconds
             var totalWeeks = Math.floor(totalSeconds / 144000);
+            // Deduce weeks from totalSeconds
             totalSeconds = totalSeconds % 144000;
+            // Get how many days in the rest of the totalSeconds
             var totalDays = Math.floor(totalSeconds / 28800);
+            // Deduce days from totalSeconds
             totalSeconds = totalSeconds % 28800;
+            // Get how many hours in the rest of the totalSeconds
             var totalHours = Math.floor(totalSeconds / 3600);
+            // Deduce hours from totalSeconds
             totalSeconds = totalSeconds % 3600;
+            // Get how many minutes in the rest of the totalSeconds
             var totalMinutes = Math.floor(totalSeconds / 60);
 
-            return (totalWeeks ? totalWeeks + 'w' : '') + ' ' + (totalDays ? totalDays + 'd' : '') + ' ' + (totalHours ? totalHours + 'h' : '') + ' ' + (totalMinutes ? totalMinutes + 'min' : '');
+            // return it in 'nicely' formated Jira format
+            return (totalWeeks ? totalWeeks + 'w' : '') + ' ' + (totalDays ? totalDays + 'd' : '') + ' ' + (totalHours ? totalHours + 'h' : '') + ' ' + (totalMinutes ? totalMinutes + 'm' : '');
 
         }
 
@@ -109,10 +125,12 @@ function onDOMContentLoaded () {
             HTML interaction
         */
  
+        // Project title
         function setProjectTitle (projectName) {
             document.getElementById('project-name').innerText = projectName;
         }
 
+        // Issues table
         function drawIssuesTable (issues) {
 
             var logTable = document.getElementById('jira-log-time-table');
