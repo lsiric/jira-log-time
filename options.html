@@ -1,80 +1,105 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Jira Log Time Options</title>
-  <style>
-    body { padding: 10px; }
-    table, tbody, input {
-      width: 100%;
-    }
-    #status {
-      padding: 10px 0;
-    }
-  </style>
+	<title>Jira Log Time Options</title>
+	<style>
+		body { 
+			width: 400px;
+			padding: 10px; 
+		}
+		table, tbody, input {
+			width: 100%;
+		}
+		td {
+			width: 50%;
+			padding: 6px;
+			text-align: left;
+		}
+		#status {
+			padding: 10px 0;
+		}
+		.btn {
+			width: 47%;
+			text-shadow: none;
+			border: none;
+			border-radius: 2px;
+			padding: 6px;
+			font-size: 12px;
+			text-transform: uppercase;
+			cursor: pointer;			
+		}
+		#save {
+			margin: 20px 0 0 3%;
+			background: #689F39;
+			color: #fff;
+			box-shadow: none;
+		}
+		#cancel {
+			margin: 20px 0 0 0;
+			background: #666;
+			color: #fff;
+			box-shadow: none;
+		}
+	</style>
 </head>
 
 <body>
 
-  <table>
-    <tr>
-      <td>
-        Project description
-      </td>
-      <td>
-        <input id="description" type="text"></input>
-      </td>
-    </tr>
+	<table>
+		<tr>
+			<td>
+				Project description
+			</td>
+			<td>
+				<input id="description" type="text"></input>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				URL       
+			</td>
+			<td>
+				<input id="baseUrl" type="text"></input>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				REST Api Extension
+			</td>
+			<td>
+				<input id="apiExtension" type="text"></input>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Username
+			</td>
+			<td>
+				<input id="username" type="text"></input>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Password       
+			</td>
+			<td>
+				<input id="password" type="password"></input>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				JQL       
+			</td>
+			<td>
+				<input id="jql" type="text"></input>
+			</td>
+		</tr>
+	</table>
+	<button id="cancel" class="btn">Cancel</button>
+	<button id="save" class="btn">Save</button>
+	<div id="status"></div>
 
-    <tr>
-      <td>
-        URL       
-      </td>
-      <td>
-        <input id="baseUrl" type="text"></input>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        REST Api Extension
-      </td>
-      <td>
-        <input id="apiExtension" type="text"></input>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        Username
-      </td>
-      <td>
-        <input id="username" type="text"></input>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        Password       
-      </td>
-      <td>
-        <input id="password" type="password"></input>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        JQL       
-      </td>
-      <td>
-        <input id="jql" type="text"></input>
-      </td>
-    </tr>
-  </table>
-
-  <button id="save">Save</button>
-  <div id="status"></div>
-
-  <script src="options.js"></script>
+	<script src="options.js"></script>
 
 </body>
 </html>
