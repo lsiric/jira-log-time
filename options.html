@@ -12,14 +12,19 @@
 		}
 		td {
 			width: 50%;
-			padding: 6px;
+			padding: 6px 0;
 			text-align: left;
 		}
 		#status {
-			padding: 10px 0;
+			/*padding: 10px 0;*/
+			height: 20px;
+			font-size: 11px;
+			font-weight: bold;
+			color: #666;
+			text-align: right;
 		}
 		.btn {
-			width: 47%;
+			width: 48%;
 			text-shadow: none;
 			border: none;
 			border-radius: 2px;
@@ -29,13 +34,13 @@
 			cursor: pointer;			
 		}
 		#save {
-			margin: 20px 0 0 3%;
+			margin: 0 0 0 3%;
 			background: #689F39;
 			color: #fff;
 			box-shadow: none;
 		}
 		#cancel {
-			margin: 20px 0 0 0;
+			margin: 0;
 			background: #666;
 			color: #fff;
 			box-shadow: none;
@@ -95,9 +100,9 @@
 			</td>
 		</tr>
 	</table>
+	<div id="status"></div>
 	<button id="cancel" class="btn">Cancel</button>
 	<button id="save" class="btn">Save</button>
-	<div id="status"></div>
 
 	<script src="options.js"></script>
 
