@@ -31,42 +31,29 @@ function onDOMContentLoaded () {
 
         setupLoader();
 
-        JIRA.login()
-        .then(onLoginSuccess, genericResponseError);
+        JIRA.getAssignedIssues()
+        .then(onFetchSuccess, genericResponseError);
 
-        function onLoginError (error) {
-            errorMessage('Login failed');
-        }
+        function onFetchSuccess (response) {
 
-        function onLoginSuccess () {
+            var promises = [];
 
-            JIRA.getAssignedIssues()
-            .then(onFetchSuccess, genericResponseError);
+            var issues = response.issues;
 
-            function onFetchSuccess (response) {
+            issues.forEach(function (issue) {
+                promises.push(getWorklog(issue.key, issues));
+            });
 
-                var promises = [];
+            // when all worklogs are fetched, draw the table
+            Promise.all(promises)
+            .then(function () {
 
-                var issues = response.issues;
+                setProjectTitle(options.description);
+                drawIssuesTable(issues);
 
-                issues.forEach(function (issue) {
-                    promises.push(getWorklog(issue.key, issues));
-                });
-
-                // when all worklogs are fetched, draw the table
-                Promise.all(promises)
-                .then(function () {
-
-                    setProjectTitle(options.description);
-                    drawIssuesTable(issues);
-
-                });
-
-            }
+            });
 
         }
-
-
 
 
 
@@ -237,16 +224,23 @@ function onDOMContentLoaded () {
             }, genericResponseError);
 
         }
-
+        // Refresh worklog row
         function refreshWorklog (issueId) {
 
             JIRA.getIssueWorklog(issueId)
             .then(onWorklogFetchSuccess, genericResponseError);
 
             function onWorklogFetchSuccess (response) {
+                // update worklog sum
                 var worklogs = response.worklogs;
                 var totalTimeSpent = document.querySelector('td[data-issue-id=' + issueId + ']');
                 totalTimeSpent.innerText = sumWorklogs(worklogs);
+                // clear time input value
+                var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
+                timeInput.value = '';
+                // clear date input value
+                var dateInput = document.querySelector('input[class=log-date-input][data-issue-id=' + issueId + ']');
+                dateInput.value = new Date().toDateInputValue();
             }
 
         }
@@ -290,13 +284,14 @@ function onDOMContentLoaded () {
             }
         }
 
-        // Popup error message
+        // Error message
         function errorMessage (message) {
             var error = document.getElementById('error')
             error.innerText = message;
             error.style.display = 'block';
         }
 
+        // Loading spinner
         function setupLoader () {
             // Popup loading indicator
             var indicator = document.getElementById('loader-container');
@@ -310,7 +305,6 @@ function onDOMContentLoaded () {
             }, false);
 
         }
-
 
         // Date helper to pre-select today's date in the datepicker
         Date.prototype.toDateInputValue = (function() {
