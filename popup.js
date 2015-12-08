@@ -287,19 +287,23 @@ function onDOMContentLoaded () {
             return element;
         }
 
-        // Generic ajax error
-        function genericResponseError (response, status, error) {
-            var parsed = '';
-            try{
-                parsed = response;
-            }catch(e){
-                parsed = 'error';
+        // Simple Jira api error handling
+        function genericResponseError (error) {
+
+            var response = error.response;
+            var status = error.status;
+            var statusText  = error.statusText;
+
+            if(response){
+                try{
+                    errorMessage(response.errorMessages.join(' ')); 
+                }catch(e){
+                    errorMessage('Error: ' + status + ' - ' + statusText);
+                }                
+            }else{
+                errorMessage('Error: ' + status + ' ' + statusText);
             }
-            if(Array.isArray(parsed.errorMessages)){
-                errorMessage(parsed.errorMessages.join(' '));
-            }else {
-                errorMessage('Error: ' + status + ' - ' + error);
-            }
+
         }
 
         // Error message

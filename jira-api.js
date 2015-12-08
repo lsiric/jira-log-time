@@ -78,7 +78,7 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
             // set response type (json)
             req.responseType = options.responseType;
 
-            // on load logidc
+            // on load logic
             req.onload = function() {
 
                 // consider all statuses between 200 and 400 successful
@@ -87,7 +87,12 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
                 }
                 // all other ones are considered to be errors
                 else {
-                    reject(req.response, req.status, req.statusText);
+                    //reject(req.response, req.status, req.statusText);
+                    reject({
+                        response: req.response, 
+                        status: req.status, 
+                        statusText: req.statusText
+                    });
                 }
 
                 // keep the count of active XMLHttpRequest objects
