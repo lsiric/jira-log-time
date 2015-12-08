@@ -290,9 +290,9 @@ function onDOMContentLoaded () {
         // Simple Jira api error handling
         function genericResponseError (error) {
 
-            var response = error.response;
-            var status = error.status;
-            var statusText  = error.statusText;
+            var response = error.response || '';
+            var status = error.status || '';
+            var statusText  = error.statusText || '';
 
             if(response){
                 try{

@@ -106,7 +106,11 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
 
             // Unpredicted error
             req.onerror = function() {
-                reject('Unknown Error');
+                reject({
+                    response: undefined, 
+                    status: undefined, 
+                    statusText: 'Unknown Error'
+                });
                 dispatchEvent('jiraError', document);
             };
 
