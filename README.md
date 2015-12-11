@@ -1,7 +1,8 @@
 # Jira Log Time Chrome plugin
 
-Code repo for [Jira Log Time]() chrome plugin.
-Thanks to [Oliver Debenc](https://www.linkedin.com/in/oliver-debenc-01821770) for the design
+Code repo for [Jira Log Time](https://chrome.google.com/webstore/detail/jira-log-time/peboekgeiffcaddndeonkmkledekeegl?authuser=1) chrome plugin.
+
+Thanks to [Oliver Debenc](https://www.linkedin.com/in/oliver-debenc-01821770) for the design.
 
 ## Options
 
