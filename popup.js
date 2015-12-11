@@ -34,8 +34,8 @@ function onDOMContentLoaded () {
         // Set project title in html
         setProjectTitle(options.description);
 
-        // Global events listener for hiding/showing loading spinner
-        initLoader();
+        // show loading spinner
+        toggleIssuesLoading();
 
         // Fetch assigned issues
         JIRA.getAssignedIssues()
@@ -45,7 +45,11 @@ function onDOMContentLoaded () {
 
             var issues = response.issues;
 
+            // create issues HTML table
             drawIssuesTable(issues);
+
+            // hide loading spinner
+            toggleIssuesLoading();
 
             // fetch worklogs for each issue
             issues.forEach(function (issue) {
@@ -58,22 +62,19 @@ function onDOMContentLoaded () {
 
 
 
-        /*
-            Worklog functions
-        */
+        /****************
+        Worklog functions
+        ****************/
 
         // Fetech and refresh worklog row
         function refreshWorklog (issueId) {
 
             // get TD container and it's children
             var totalTimeContainer = document.querySelector('td[class="total-time-container"][data-issue-id="' + issueId + '"]');
-            var loader = totalTimeContainer.firstChild;
             var totalTime = totalTimeContainer.lastChild;
 
-            // show loader
-            loader.style.display = 'block';
-            // hide time
-            totalTime.style.display = 'none';
+            // toggle worklog loading spinner
+            toggleWorklogLoading(totalTimeContainer);
 
             // fetch worklog
             JIRA.getIssueWorklog(issueId)
@@ -82,10 +83,8 @@ function onDOMContentLoaded () {
             function onWorklogFetchSuccess (response) {
                 // set total time
                 totalTime.innerText = sumWorklogs(response.worklogs);
-                // show time
-                totalTime.style.display = 'block';
-                // hide loader
-                loader.style.display = 'none';
+                // toggle worklog loading spinner
+                toggleWorklogLoading(totalTimeContainer);
                 // clear time input value
                 var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
                 timeInput.value = '';
@@ -128,13 +127,25 @@ function onDOMContentLoaded () {
 
 
 
-        /*
-            HTML interaction
-        */
- 
+        /***************
+        HTML interaction
+        ****************/
+
         // Project title
         function setProjectTitle (projectName) {
             document.getElementById('project-name').innerText = projectName;
+        }
+
+        // Loading spinner
+        function toggleIssuesLoading () {
+            var loader = document.getElementById('loader-container');
+            loader.style.display = loader.style.display == 'block' ?  'none' : 'block';
+        }
+
+        function toggleWorklogLoading (containerTd) {
+            var loader = containerTd.firstChild;
+            var totalTime = containerTd.lastChild;
+            loader.style.display = loader.style.display == 'block' ?  'none' : 'block';
         }
 
         // Issues table
@@ -295,10 +306,9 @@ function onDOMContentLoaded () {
 
 
 
-        /* 
-            Helper functions 
-        */
-
+        /***************
+        Helper functions 
+        ***************/
         // html generator
         function buildHTML (tag, html, attrs) {
 
@@ -334,14 +344,22 @@ function onDOMContentLoaded () {
 
         }
 
-        // Error message
+        // UI error message
         function errorMessage (message) {
             var error = document.getElementById('error')
             error.innerText = message;
             error.style.display = 'block';
         }
 
-        // Loading spinner
+        // Date helper to pre-select today's date in the datepicker
+        Date.prototype.toDateInputValue = (function() {
+            var local = new Date(this);
+            local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+            return local.toJSON().slice(0,10);
+        });
+
+        // Listen to global events and show loading spiner
+        // ** NOT USED AT THE MOMENT **
         function initLoader () {
             // Popup loading indicator
             var indicator = document.getElementById('loader-container');
@@ -355,13 +373,6 @@ function onDOMContentLoaded () {
             }, false);
 
         }
-
-        // Date helper to pre-select today's date in the datepicker
-        Date.prototype.toDateInputValue = (function() {
-            var local = new Date(this);
-            local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
-            return local.toJSON().slice(0,10);
-        });
 
     }
 
