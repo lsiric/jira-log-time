@@ -12,6 +12,12 @@ function onDOMContentLoaded () {
     }, 
     init);
 
+
+
+    /*************
+    Initialization
+    *************/
+
     function init (options) {
 
         // mandatory fields check
@@ -34,12 +40,12 @@ function onDOMContentLoaded () {
         // Set project title in html
         setProjectTitle(options.description);
 
-        // show loading spinner
-        toggleIssuesLoading();
+        // show main loading spinner
+        toggleVisibility('div[id=loader-container]');
 
-        // Fetch assigned issues
-        JIRA.getAssignedIssues()
-        .then(onFetchSuccess, genericResponseError);
+        // fetch issues
+        JIRA.getIssues()
+        .then(onFetchSuccess, onFetchError);
 
         function onFetchSuccess (response) {
 
@@ -48,17 +54,21 @@ function onDOMContentLoaded () {
             // create issues HTML table
             drawIssuesTable(issues);
 
-            // hide loading spinner
-            toggleIssuesLoading();
+            // hide main loading spinner
+            toggleVisibility('div[id=loader-container]');
 
-            // fetch worklogs for each issue
+            // asynchronously fetch and draw total worklog time
             issues.forEach(function (issue) {
-                // asynchronously fetch and draw total worklog time
-                refreshWorklog(issue.key);
+                getWorklog(issue.key);
             });
 
         }
 
+        function onFetchError (error) {
+            // hide main loading spinner
+            toggleVisibility('div[id=loader-container]');
+            genericResponseError(error);
+        }
 
 
 
@@ -66,33 +76,40 @@ function onDOMContentLoaded () {
         Worklog functions
         ****************/
 
-        // Fetech and refresh worklog row
-        function refreshWorklog (issueId) {
+        // Fetch and refresh worklog row
+        function getWorklog (issueId) {
 
-            // get TD container and it's children
-            var totalTimeContainer = document.querySelector('td[class="total-time-container"][data-issue-id="' + issueId + '"]');
-            var totalTime = totalTimeContainer.lastChild;
+            // total time and it's acompanying loader are in the same td, so we can use previousSibling
+            var totalTime = document.querySelector('div[class="issue-total-time-spent"][data-issue-id="' + issueId + '"]');
+            var loader = totalTime.previousSibling;
 
-            // toggle worklog loading spinner
-            toggleWorklogLoading(totalTimeContainer);
+            // hide worklog time and show loading
+            totalTime.style.display = 'none';
+            loader.style.display = 'block';
 
             // fetch worklog
             JIRA.getIssueWorklog(issueId)
-            .then(onWorklogFetchSuccess, genericResponseError);
+            .then(onWorklogFetchSuccess, onWorklogFetchError);
 
             function onWorklogFetchSuccess (response) {
                 // set total time
                 totalTime.innerText = sumWorklogs(response.worklogs);
-                // toggle worklog loading spinner
-                toggleWorklogLoading(totalTimeContainer);
+                // show worklog time and hide loading
+                totalTime.style.display = 'block';
+                loader.style.display = 'none';
                 // clear time input value
                 var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
                 timeInput.value = '';
             }
 
+            function onWorklogFetchError (error) {
+                // show worklog time and hide loading inspite the error
+                totalTime.style.display = 'block';
+                loader.style.display = 'none';
+                genericResponseError(error);
+            }
+
         }
-
-
 
         // Worklogs sum in 'jira format' (1w 2d 3h 44m)
         function sumWorklogs (worklogs) {
@@ -124,9 +141,6 @@ function onDOMContentLoaded () {
 
 
 
-
-
-
         /***************
         HTML interaction
         ****************/
@@ -136,16 +150,9 @@ function onDOMContentLoaded () {
             document.getElementById('project-name').innerText = projectName;
         }
 
-        // Loading spinner
-        function toggleIssuesLoading () {
-            var loader = document.getElementById('loader-container');
-            loader.style.display = loader.style.display == 'block' ?  'none' : 'block';
-        }
-
-        function toggleWorklogLoading (containerTd) {
-            var loader = containerTd.firstChild;
-            var totalTime = containerTd.lastChild;
-            loader.style.display = loader.style.display == 'block' ?  'none' : 'block';
+        function toggleVisibility (query) {
+            var element = document.querySelector(query);
+            element.style.display = element.style.display == 'block' ?  'none' : 'block';
         }
 
         // Issues table
@@ -163,7 +170,9 @@ function onDOMContentLoaded () {
 
         }
 
+        // generate all html elements for issue table
         function generateLogTableRow (id, summary) {
+
             /*************
              Issue ID cell
             *************/ 
@@ -183,7 +192,8 @@ function onDOMContentLoaded () {
             ***************/
             // summary loader
             var loader = buildHTML('div', null, {
-                class: 'loader-mini'
+                class: 'loader-mini',
+                'data-issue-id' : id
             });
             // summary total time
             var totalTime = buildHTML('div', null, {
@@ -258,30 +268,22 @@ function onDOMContentLoaded () {
 
 
 
+        /********************
+        Log time button click
+        ********************/
 
-
-
-        /*
-            Log time button
-        */
         function logTimeClick (evt) {
 
-            // clear error messages
+            // clear any error messages
             errorMessage('');
 
             // get issue ID
             var issueId = evt.target.getAttribute('data-issue-id')
 
-            // find it's row
-            var issueRow = document.querySelector('tr[data-issue-id=' + issueId + ']');
-            // find row time input
-            var timeInput = issueRow.querySelector('input[data-issue-id=' + issueId + ']');
-            // find row date input
-            var dateInput = issueRow.querySelector('input[class=issue-log-date-input][data-issue-id=' + issueId + ']');
-            // find row total time loader
-            var totalTimeLoading = issueRow.querySelector('div[class="loader-mini"]');
-            // find row total time
-            var totalTime = issueRow.querySelector('div[class="issue-total-time-spent"][data-issue-id=' + issueId + ']');
+            // time input
+            var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
+            // date input
+            var dateInput = document.querySelector('input[class=issue-log-date-input][data-issue-id=' + issueId + ']');
 
             // validate time input
             if(!timeInput.value.match(/[0-9]{1,4}[wdhm]/g)){
@@ -289,26 +291,23 @@ function onDOMContentLoaded () {
                 return;
             }
 
-            // show loading
-            totalTimeLoading.style.display = 'block';
-            // hide time input
-            totalTime.style.display = 'none';
+            // hide total time and show loading spinner;
+            toggleVisibility('div[class="issue-total-time-spent"][data-issue-id=' + issueId + ']');
+            toggleVisibility('div[class="loader-mini"][data-issue-id=' + issueId + ']');
 
             JIRA.updateWorklog(issueId, timeInput.value, new Date(dateInput.value))
             .then(function (data) {
-                refreshWorklog(issueId);
+                getWorklog(issueId);
             }, genericResponseError);
 
         }
 
 
 
-
-
-
         /***************
         Helper functions 
         ***************/
+
         // html generator
         function buildHTML (tag, html, attrs) {
 
@@ -358,7 +357,7 @@ function onDOMContentLoaded () {
             return local.toJSON().slice(0,10);
         });
 
-        // Listen to global events and show loading spiner
+        // Listen to global events and show/hide main loading spiner
         // ** NOT USED AT THE MOMENT **
         function initLoader () {
             // Popup loading indicator
