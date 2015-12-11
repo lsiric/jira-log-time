@@ -1,13 +1,7 @@
 # Jira Log Time Chrome plugin
 
-## Usage
-
-- Download ZIP archive
-- Unpack it on your hard drive
-- open Chrome extensions
-- tick `Developer mode`
-- click `Load unpacked extension`
-- point to folder where you extracted your ZIP file
+Code repo for [Jira Log Time]() chrome plugin.
+Thanks to [Oliver Debenc](https://www.linkedin.com/in/oliver-debenc-01821770) for the design
 
 ## Options
 
