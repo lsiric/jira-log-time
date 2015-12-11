@@ -30,9 +30,12 @@ function onDOMContentLoaded () {
 
         // Jira API instantiation
         var JIRA = JiraAPI(options.baseUrl, options.apiExtension, options.username, options.password, options.jql);
+        
+        // Set project title in html
+        setProjectTitle(options.description);
 
         // Global events listener for hiding/showing loading spinner
-        setupLoader();
+        initLoader();
 
         // Fetch assigned issues
         JIRA.getAssignedIssues()
@@ -40,24 +43,14 @@ function onDOMContentLoaded () {
 
         function onFetchSuccess (response) {
 
-            var promises = [];
-
             var issues = response.issues;
 
-            // fetch worklogs for every single issue
+            drawIssuesTable(issues);
+
+            // fetch worklogs for each issue
             issues.forEach(function (issue) {
-                // queue all requests
-                promises.push(getWorklog(issue.key, issues));
-            });
-
-            // when all worklogs are fetched, begin html interaction
-            Promise.all(promises)
-            .then(function () {
-                // draw project title
-                setProjectTitle(options.description);
-                // draw html table with issues and worklogs 
-                drawIssuesTable(issues);
-
+                // asynchronously fetch and draw total worklog time
+                refreshWorklog(issue.key);
             });
 
         }
@@ -69,24 +62,38 @@ function onDOMContentLoaded () {
             Worklog functions
         */
 
-        // Issues are passed in so we can construct entire issue object with worklogs before we draw the html table
-        function getWorklog (id, issues) {
+        // Fetech and refresh worklog row
+        function refreshWorklog (issueId) {
 
-            // Fetch worklog
-            return JIRA.getIssueWorklog(id)
+            // get TD container and it's children
+            var totalTimeContainer = document.querySelector('td[class="total-time-container"][data-issue-id="' + issueId + '"]');
+            var loader = totalTimeContainer.firstChild;
+            var totalTime = totalTimeContainer.lastChild;
+
+            // show loader
+            loader.style.display = 'block';
+            // hide time
+            totalTime.style.display = 'none';
+
+            // fetch worklog
+            JIRA.getIssueWorklog(issueId)
             .then(onWorklogFetchSuccess, genericResponseError);
 
             function onWorklogFetchSuccess (response) {
-
-                issues.forEach(function (issue) {
-                    if(issue.key === id){
-                        issue.totalTime = sumWorklogs(response.worklogs);
-                    } 
-                });
-
+                // set total time
+                totalTime.innerText = sumWorklogs(response.worklogs);
+                // show time
+                totalTime.style.display = 'block';
+                // hide loader
+                loader.style.display = 'none';
+                // clear time input value
+                var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
+                timeInput.value = '';
             }
 
         }
+
+
 
         // Worklogs sum in 'jira format' (1w 2d 3h 44m)
         function sumWorklogs (worklogs) {
@@ -137,7 +144,7 @@ function onDOMContentLoaded () {
             var tbody = buildHTML('tbody');
 
             issues.forEach(function (issue) {
-                var row = generateLogTableRow(issue.key, issue.fields.summary, issue.totalTime);
+                var row = generateLogTableRow(issue.key, issue.fields.summary);
                 tbody.appendChild(row)
             });
 
@@ -145,50 +152,72 @@ function onDOMContentLoaded () {
 
         }
 
-        function generateLogTableRow (id, summary, time) {
-
-            // Issue ID cell
+        function generateLogTableRow (id, summary) {
+            /*************
+             Issue ID cell
+            *************/ 
             var idCell = buildHTML('td', id, {
                 class: 'issue-id'
             });
-
-            // Issue summary cell
+            
+            /************
+            Issue summary
+            ************/
             var summaryCell = buildHTML('td', summary, {
                 class: 'issue-summary truncate'
             });
 
-            // Issue total worklog sum
-            var totalTimeCell = buildHTML('td', time, {
+            /***************
+            Total spent time
+            ***************/
+            // summary loader
+            var loader = buildHTML('div', null, {
+                class: 'loader-mini'
+            });
+            // summary total time
+            var totalTime = buildHTML('div', null, {
                 class: 'issue-total-time-spent',
                 'data-issue-id' : id
             });
+            // Issue total worklog sum
+            var totalTimeContainer = buildHTML('td', null, {
+                class: 'total-time-container',
+                'data-issue-id' : id
+            });
+            totalTimeContainer.appendChild(loader);
+            totalTimeContainer.appendChild(totalTime);
             
-            // Time input 
+            /*********
+            Time input
+            *********/
             var timeInput = buildHTML('input', null, {
                 class: 'issue-time-input',
                 'data-issue-id': id
             });
-            
             // Time input cell
             var timeInputCell = buildHTML('td');
             timeInputCell.appendChild(timeInput);
 
-            // Date input
+            /*********
+            Date input
+            *********/
             var dateInput = buildHTML('input', null, {
                 type: 'date',
-                class: 'log-date-input',
+                class: 'issue-log-date-input',
                 value: new Date().toDateInputValue(),
                 'data-issue-id': id
             });
-            
             // Date input cell
             var dateInputCell = buildHTML('td');
             dateInputCell.appendChild(dateInput);
 
+            /************
+            Action button
+            ************/
             var actionButton = buildHTML('input', null, {
                 type: 'button',
                 value: 'Log Time',
-                class: 'log-time-btn',
+                class: 'issue-log-time-btn',
                 'data-issue-id': id
             });
 
@@ -198,12 +227,16 @@ function onDOMContentLoaded () {
             var actionCell = buildHTML('td');
             actionCell.appendChild(actionButton);
 
-            // building up row from cells
-            var row = buildHTML('tr');
+            /********
+            Issue row
+            ********/
+            var row = buildHTML('tr', null, {
+                'data-issue-id': id
+            });
 
             row.appendChild(idCell);
             row.appendChild(summaryCell);
-            row.appendChild(totalTimeCell);
+            row.appendChild(totalTimeContainer);
             row.appendChild(timeInputCell);
             row.appendChild(dateInputCell);
             row.appendChild(actionCell);
@@ -222,44 +255,38 @@ function onDOMContentLoaded () {
         */
         function logTimeClick (evt) {
 
+            // clear error messages
+            errorMessage('');
+
+            // get issue ID
             var issueId = evt.target.getAttribute('data-issue-id')
-            var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
-            var dateString = document.querySelector('input[class=log-date-input][data-issue-id=' + issueId + ']').value;
+
+            // find it's row
+            var issueRow = document.querySelector('tr[data-issue-id=' + issueId + ']');
+            // find row time input
+            var timeInput = issueRow.querySelector('input[data-issue-id=' + issueId + ']');
+            // find row date input
+            var dateInput = issueRow.querySelector('input[class=issue-log-date-input][data-issue-id=' + issueId + ']');
+            // find row total time loader
+            var totalTimeLoading = issueRow.querySelector('div[class="loader-mini"]');
+            // find row total time
+            var totalTime = issueRow.querySelector('div[class="issue-total-time-spent"][data-issue-id=' + issueId + ']');
 
             // validate time input
             if(!timeInput.value.match(/[0-9]{1,4}[wdhm]/g)){
                 errorMessage('Time input in wrong format. You can specify a time unit after a time value "X", such as Xw, Xd, Xh or Xm, to represent weeks (w), days (d), hours (h) and minutes (m), respectively.');
                 return;
             }
-            else{
-                // clear error messages
-                errorMessage('');
-            }
 
-            JIRA.updateWorklog(issueId, timeInput.value, new Date(dateString))
+            // show loading
+            totalTimeLoading.style.display = 'block';
+            // hide time input
+            totalTime.style.display = 'none';
+
+            JIRA.updateWorklog(issueId, timeInput.value, new Date(dateInput.value))
             .then(function (data) {
                 refreshWorklog(issueId);
             }, genericResponseError);
-
-        }
-        // Refresh worklog row
-        function refreshWorklog (issueId) {
-
-            JIRA.getIssueWorklog(issueId)
-            .then(onWorklogFetchSuccess, genericResponseError);
-
-            function onWorklogFetchSuccess (response) {
-                // update worklog sum
-                var worklogs = response.worklogs;
-                var totalTimeSpent = document.querySelector('td[data-issue-id=' + issueId + ']');
-                totalTimeSpent.innerText = sumWorklogs(worklogs);
-                // clear time input value
-                var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
-                timeInput.value = '';
-                // clear date input value
-                var dateInput = document.querySelector('input[class=log-date-input][data-issue-id=' + issueId + ']');
-                dateInput.value = new Date().toDateInputValue();
-            }
 
         }
 
@@ -276,9 +303,10 @@ function onDOMContentLoaded () {
         function buildHTML (tag, html, attrs) {
 
             var element = document.createElement(tag);
-
+            // if custom html passed in, append it
             if(html) element.innerHTML = html;
 
+            // set each individual attribute passed in
             for (attr in attrs) {
                 if(attrs[attr] === false) continue;
                 element.setAttribute(attr, attrs[attr]);
@@ -314,7 +342,7 @@ function onDOMContentLoaded () {
         }
 
         // Loading spinner
-        function setupLoader () {
+        function initLoader () {
             // Popup loading indicator
             var indicator = document.getElementById('loader-container');
 
