@@ -16,7 +16,7 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
     return {
         login : login,
         getIssue : getIssue,
-        getAssignedIssues: getAssignedIssues,
+        getIssues: getIssues,
         getIssueWorklog : getIssueWorklog,
         updateWorklog : updateWorklog
     };
@@ -39,7 +39,7 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         return ajaxWrapper('/issue/' + id);
     }
 
-    function getAssignedIssues () {
+    function getIssues () {
         return ajaxWrapper('/search?jql=' + jql);
     }    
 
