@@ -298,7 +298,12 @@ function onDOMContentLoaded () {
             JIRA.updateWorklog(issueId, timeInput.value, new Date(dateInput.value))
             .then(function (data) {
                 getWorklog(issueId);
-            }, genericResponseError);
+            }, function (error) {
+                // hide total time and show loading spinner;
+                toggleVisibility('div[class="issue-total-time-spent"][data-issue-id=' + issueId + ']');
+                toggleVisibility('div[class="loader-mini"][data-issue-id=' + issueId + ']');
+                genericResponseError(error);
+            });
 
         }
 
