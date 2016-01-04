@@ -52,7 +52,7 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         var options = {
             type: 'POST',
             data: JSON.stringify({
-                "started": date.toISOString().replace('Z', '+0530'), // TODO: Quick fix - Problems with the timezone, investigate
+                "started": date.toISOString().replace('Z', '+0000'), // TODO: Quick fix - Problems with the timezone, investigate
                 "timeSpent": timeSpent
             })
         }
