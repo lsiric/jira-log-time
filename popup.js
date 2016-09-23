@@ -176,9 +176,23 @@ function onDOMContentLoaded () {
             /*************
              Issue ID cell
             *************/ 
-            var idCell = buildHTML('td', id, {
+            var idCell = buildHTML('td', null, {
                 class: 'issue-id'
             });
+
+            var idText = document.createTextNode(id);
+
+            /*********************
+            Link to the JIRA issue
+            *********************/
+
+            var jiraLink = buildHTML('a', null, {
+                href: options.baseUrl + "/issues/" + id,
+                target: "_blank"
+            } );
+
+            jiraLink.appendChild(idText);
+            idCell.appendChild(jiraLink);
             
             /************
             Issue summary
