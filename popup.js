@@ -309,7 +309,9 @@ function onDOMContentLoaded() {
             toggleVisibility('div[class="issue-total-time-spent"][data-issue-id=' + issueId + ']');
             toggleVisibility('div[class="loader-mini"][data-issue-id=' + issueId + ']');
 
-            JIRA.updateWorklog(issueId, timeInput.value, new Date(dateInput.value))
+            var startedTime = getStartedTime(dateInput.value);
+
+            JIRA.updateWorklog(issueId, timeInput.value, startedTime)
                 .then(function(data) {
                     getWorklog(issueId);
                 }, function(error) {
@@ -375,6 +377,28 @@ function onDOMContentLoaded() {
             local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
             return local.toJSON().slice(0, 10);
         });
+
+        function getStartedTime(dateString) {
+            var date = new Date(dateString);
+            var time = new Date();
+            var tzo = -date.getTimezoneOffset();
+            var dif = tzo >= 0 ? '+' : '-';
+
+            return date.getFullYear() 
+                + '-' + pad(date.getMonth()+1)
+                + '-' + pad(date.getDate())
+                + 'T' + pad(time.getHours())
+                + ':' + pad(time.getMinutes()) 
+                + ':' + pad(time.getSeconds()) 
+                + '.' + pad(time.getMilliseconds())
+                + dif + pad(tzo / 60) 
+                + pad(tzo % 60);
+        }
+
+        function pad (num) {
+            var norm = Math.abs(Math.floor(num));
+            return (norm < 10 ? '0' : '') + norm;
+        }
 
         // Listen to global events and show/hide main loading spiner
         // ** NOT USED AT THE MOMENT **
