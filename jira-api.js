@@ -47,13 +47,13 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         return ajaxWrapper('/issue/' + id + '/worklog');
     }
 
-    function updateWorklog (id, timeSpent, date) {
+    function updateWorklog (id, timeSpent, started) {
         var url = '/issue/' + id + '/worklog';
         var options = {
             type: 'POST',
             data: JSON.stringify({
-                "started": date.toISOString().replace('Z', '+0000'), // TODO: Quick fix - Problems with the timezone, investigate
-                "timeSpent": timeSpent
+                'started': started,
+                'timeSpent': timeSpent
             })
         }
         return ajaxWrapper(url, options);
