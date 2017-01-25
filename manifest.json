@@ -4,7 +4,7 @@
   "name": "Jira Log Time",
   "short_name": "Jira Log Time",
   "description": "Log your daily time in seconds!",
-  "version": "1.1.3",
+  "version": "1.2.1",
 
   "options_ui": {
     "page": "options.html",
