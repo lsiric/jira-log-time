@@ -406,7 +406,7 @@ function onDOMContentLoaded() {
 
             return date.getFullYear() 
                 + '-' + pad(date.getMonth()+1)
-                + '-' + pad(date.getDate())
+                + '-' + pad(date.getDate()+1)
                 + 'T' + pad(time.getHours())
                 + ':' + pad(time.getMinutes()) 
                 + ':' + pad(time.getSeconds()) 
