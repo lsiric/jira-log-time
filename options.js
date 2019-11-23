@@ -34,10 +34,10 @@
         chrome.storage.sync.get({
             username: '',
             password: '',
-            description: '',
-            baseUrl: '',
+            description: 'INWK Time Tracking',
+            baseUrl: 'https://jira.inwk.com',
             apiExtension: '/rest/api/2',
-            jql: 'currentUser()'
+            jql: 'project = VP AND issuetype in (Bug, Story, Task) AND Sprint in (openSprints()) or issue = VP-8119'
         }, function(items) {
 
             document.getElementById('username').value = items.username;
