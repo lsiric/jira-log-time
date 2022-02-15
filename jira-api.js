@@ -47,13 +47,14 @@ function JiraAPI (baseUrl, apiExtension, username, password, jql) {
         return ajaxWrapper('/issue/' + id + '/worklog');
     }
 
-    function updateWorklog (id, timeSpent, started) {
+    function updateWorklog (id, timeSpent, started, comment) {
         var url = '/issue/' + id + '/worklog';
         var options = {
             type: 'POST',
             data: JSON.stringify({
                 'started': started,
-                'timeSpent': timeSpent
+                'timeSpent': timeSpent,
+				'comment': comment,
             })
         }
         return ajaxWrapper(url, options);
