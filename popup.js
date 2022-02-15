@@ -98,8 +98,8 @@ function onDOMContentLoaded() {
                 totalTime.style.display = 'block';
                 loader.style.display = 'none';
                 // clear time input value
-                var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
-                timeInput.value = '';
+                var inputs = document.querySelectorAll('input.issue-time-input, input.issue-comment-input');
+                inputs.forEach(element => element.value = '');
             }
 
             function onWorklogFetchError(error) {
@@ -232,6 +232,17 @@ function onDOMContentLoaded() {
             // Time input cell
             var timeInputCell = buildHTML('td');
             timeInputCell.appendChild(timeInput);
+			
+			/*********
+            Comment input
+            *********/
+            var commentInput = buildHTML('input', null, {
+                class: 'issue-comment-input',
+                'data-issue-id': id
+            });
+            // Comment input cell
+            var commentInputCell = buildHTML('td');
+            commentInputCell.appendChild(commentInput);
 
             /*********
             Date input
@@ -273,6 +284,7 @@ function onDOMContentLoaded() {
             row.appendChild(summaryCell);
             row.appendChild(totalTimeContainer);
             row.appendChild(timeInputCell);
+            row.appendChild(commentInputCell);
             row.appendChild(dateInputCell);
             row.appendChild(actionCell);
 
@@ -298,6 +310,8 @@ function onDOMContentLoaded() {
             var timeInput = document.querySelector('input[data-issue-id=' + issueId + ']');
             // date input
             var dateInput = document.querySelector('input[class=issue-log-date-input][data-issue-id=' + issueId + ']');
+            // comment input
+			var commentInput = document.querySelector('input[class=issue-comment-input][data-issue-id=' + issueId + ']');
 
             // validate time input
             if (!timeInput.value.match(/[0-9]{1,4}[wdhm]/g)) {
@@ -311,7 +325,7 @@ function onDOMContentLoaded() {
 
             var startedTime = getStartedTime(dateInput.value);
 
-            JIRA.updateWorklog(issueId, timeInput.value, startedTime)
+            JIRA.updateWorklog(issueId, timeInput.value, startedTime, commentInput.value)
                 .then(function(data) {
                     getWorklog(issueId);
                 }, function(error) {
